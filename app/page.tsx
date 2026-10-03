@@ -58,7 +58,7 @@ export default function Home() {
 				<nav className="main-nav" aria-label="Main navigation">
 					{navItems.map(([label, href]) => <a href={href} key={href}>{label}</a>)}
 				</nav>
-				<div className="header-actions"><a className="login-link" href="/authorization">Log in</a><a className="button button-small" href="/authorization">Get Started <ArrowIcon /></a></div>
+				<div className="header-actions"><a className="login-link" href="/authorization">Log in</a><a className="button button-small" href="/authorization?mode=register">Get Started <ArrowIcon /></a></div>
 			</header>
 
 			<section className="hero">
@@ -67,7 +67,7 @@ export default function Home() {
 					<span className="eyebrow"><i /> The space to build what's next</span>
 					<h1>Explore the future<br /><span>with Jelaksy</span></h1>
 					<p>Jelaksy helps you turn an idea into a structured plan and guides you through building it step by step.</p>
-					<a className="button button-primary" href="/authorization">Get Started <ArrowIcon /></a>
+					<a className="button button-primary" href="/authorization?mode=register">Get Started <ArrowIcon /></a>
 				</div>
 			</section>
 
@@ -88,7 +88,7 @@ export default function Home() {
 					<span className="eyebrow">
 						<i /> Your next chapter starts here
 						</span><h2>Ready to<br /><em>explore?</em></h2>
-						<Link className="button button-primary" href="/authorization">Get Started <ArrowIcon /></Link>
+						<Link className="button button-primary" href="/authorization?mode=register">Get Started <ArrowIcon /></Link>
 						</div>
 			</section>
 

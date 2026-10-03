@@ -20,7 +20,7 @@ export default function SecondaryPage({
       </nav>
       <div className="header-actions secondary-actions">
         <Link className="login-link" href="/authorization">Log in</Link>
-        <Link className="button button-small" href="/authorization">Get Started <ArrowIcon /></Link>
+        <Link className="button button-small" href="/authorization?mode=register">Get Started <ArrowIcon /></Link>
       </div>
     </header>
     <span className="eyebrow"><i /> {eyebrow}</span>

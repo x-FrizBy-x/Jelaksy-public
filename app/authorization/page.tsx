@@ -1,6 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import PlanetMark from "@/components/objects";
+import { registerUser, loginUser } from "./actions";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/session";
 
 const providers = [
 	["GitHub", "/icons/github.svg"],
@@ -13,6 +16,11 @@ type AuthorizationPageProps = {
 };
 
 export default async function AuthorizationPage({ searchParams }: AuthorizationPageProps) {
+	const user = await getCurrentUser();
+
+	if (user) {
+  		redirect("/platform");
+	}
 	const params = await searchParams;
 	const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
 	const isRegistering = mode === "register";
@@ -43,8 +51,11 @@ export default async function AuthorizationPage({ searchParams }: AuthorizationP
 
 				<div className="authorization-divider"><span>or {isRegistering ? "register" : "continue"} with email</span></div>
 
-				<form className="authorization-form">
-					{isRegistering && <input type="hidden" name="mode" value="register" />}
+				<form className="authorization-form" action={isRegistering ? registerUser : loginUser}>
+					{isRegistering && <>
+						<label htmlFor="name">Name</label>
+						<input id="name" name="name" type="text" placeholder="Your name" autoComplete="name" />
+					</>}
 					<label htmlFor="email">Email address</label>
 					<input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" />
 					<label htmlFor="password">Password</label>
