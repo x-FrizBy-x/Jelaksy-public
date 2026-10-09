@@ -7,6 +7,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
 model User {
   id            Int       @id @default(autoincrement())
   email         String    @unique
@@ -15,4 +21,20 @@ model User {
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  projects      Project[]
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  ownerId     Int
+  name        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
 }
