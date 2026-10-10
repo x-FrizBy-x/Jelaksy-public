@@ -72,7 +72,7 @@ export default function Home() {
 			</section>
 
 			<section className="intro section-band" id="about">
-				<div className="section-label"><span>01</span><i /></div>
+				<div className="section-label"></div>
 				<div className="intro-copy"><span className="eyebrow muted">A clearer way forward</span><h2>Turn your ideas<br /><em>into reality.</em></h2></div>
 				<div className="intro-detail"><p>Jelaksy helps you turn an idea into a structured plan and guides you through building it step by step.</p><a className="button button-primary" href="/authorization">Start exploring <ArrowIcon /></a></div>
 			</section>
