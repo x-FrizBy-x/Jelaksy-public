@@ -7,10 +7,13 @@ datasource db {
   provider = "postgresql"
 }
 
-enum ProjectStatus {
-  ACTIVE
-  COMPLETED
-  ARCHIVED
+enum UserPlan {
+  Basic
+  Pro
+  Ultra
+  Small
+  Medium
+  Large
 }
 
 model User {
@@ -18,6 +21,7 @@ model User {
   email         String    @unique
   name          String
   passwordHash  String
+  plan          UserPlan  @default(Basic)
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -29,8 +33,9 @@ model Project {
   id          String        @id @default(cuid())
   ownerId     Int
   name        String
-  description String?
-  status      ProjectStatus @default(ACTIVE)
+  description String
+  roadmap     Json?
+  chatMessages Json?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

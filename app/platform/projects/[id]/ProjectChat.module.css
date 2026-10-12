@@ -1,0 +1,635 @@
+.page {
+  min-height: 100vh;
+  color: #edf5ff;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 66px;
+  padding: 0 clamp(18px, 5vw, 64px);
+  border-bottom: 1px solid rgba(151, 190, 225, 0.14);
+  background: rgba(5, 12, 25, 0.52);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.06em;
+}
+
+.brand :global(.planet-mark) {
+  transform: scale(0.82);
+  transform-origin: left center;
+  width: 27px;
+}
+
+.backLink,
+.returnLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(112, 223, 255, 0.25);
+  border-radius: 9px;
+  background: rgba(112, 223, 255, 0.07);
+  color: #cdefff;
+  font-size: 0.78rem;
+  text-decoration: none;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.backLink:hover,
+.returnLink:hover {
+  border-color: rgba(112, 223, 255, 0.55);
+  background: rgba(112, 223, 255, 0.13);
+  color: #8edcff;
+}
+
+.workspace {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 42px clamp(18px, 5vw, 64px) 55px;
+}
+
+.projectHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 30px;
+}
+
+.eyebrow,
+.roadmapKicker {
+  margin: 0 0 11px;
+  color: #70dfff;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+}
+
+.projectHeading h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 450;
+  letter-spacing: -0.07em;
+  overflow-wrap: anywhere;
+}
+
+.headingActions {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.deleteButton,
+.cancelDeleteButton,
+.confirmDeleteButton {
+  min-height: 37px;
+  padding: 0 13px;
+  border: 1px solid rgba(151, 190, 225, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #c5d6e9;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.deleteButton {
+  border-color: rgba(255, 130, 130, 0.28);
+  color: #ffaaaa;
+}
+
+.deleteButton:hover,
+.confirmDeleteButton:hover:not(:disabled) {
+  background: rgba(190, 56, 64, 0.18);
+}
+
+.deleteDialogBackdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 22px;
+  background: rgba(2, 7, 15, 0.78);
+  backdrop-filter: blur(9px);
+}
+
+.deleteDialog {
+  width: min(100%, 440px);
+  padding: 30px;
+  border: 1px solid rgba(255, 130, 130, 0.24);
+  border-radius: 16px;
+  background: linear-gradient(145deg, #142238, #091422);
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.45);
+}
+
+.deleteDialog h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.deleteDialog > p:not(.eyebrow, .deleteError) {
+  margin: 12px 0 24px;
+  color: #9aacc2;
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.deleteDialog > p strong {
+  color: #e5effb;
+  overflow-wrap: anywhere;
+}
+
+.deleteDialogActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.confirmDeleteButton {
+  border-color: rgba(255, 130, 130, 0.4);
+  background: rgba(161, 44, 52, 0.24);
+  color: #ffdada;
+}
+
+.cancelDeleteButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.deleteDialogActions button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.deleteError {
+  margin: -12px 0 18px;
+  color: #ffaaa9;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.chatPanel,
+.roadmapPanel {
+  min-width: 0;
+  min-height: 590px;
+  border: 1px solid rgba(151, 190, 225, 0.15);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(14, 30, 50, 0.9), rgba(7, 17, 31, 0.9));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.13);
+}
+
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 14px 19px;
+  border-bottom: 1px solid rgba(151, 190, 225, 0.12);
+}
+
+.assistantMark,
+.roadmapIcon {
+  display: grid;
+  flex: 0 0 36px;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(112, 223, 255, 0.2);
+  border-radius: 11px;
+  background: rgba(112, 223, 255, 0.07);
+  color: #70dfff;
+  font-size: 1.1rem;
+}
+
+.panelHeader h2 {
+  margin: 0;
+  color: #e7f2ff;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.panelHeader p {
+  margin: 5px 0 0;
+  color: #8296ae;
+  font-size: 0.72rem;
+}
+
+.conversation {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 590px;
+  min-height: 380px;
+  overflow: auto;
+  padding: 22px;
+}
+
+.welcomeMessage,
+.roadmapEmpty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 22px;
+  text-align: center;
+}
+
+.welcomeGlyph {
+  display: grid;
+  place-items: center;
+  width: 47px;
+  height: 47px;
+  border: 1px solid rgba(112, 223, 255, 0.22);
+  border-radius: 15px;
+  color: #70dfff;
+  font-size: 1.45rem;
+}
+
+.welcomeMessage h3,
+.roadmapEmpty h3 {
+  margin: 18px 0 8px;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.welcomeMessage p,
+.roadmapEmpty p {
+  max-width: 310px;
+  margin: 0;
+  color: #8ea2ba;
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  min-height: 42px;
+  margin-top: 22px;
+  padding: 0 13px;
+  border: 1px solid rgba(112, 223, 255, 0.2);
+  border-radius: 9px;
+  background: rgba(112, 223, 255, 0.055);
+  color: #c8efff;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.suggestion span {
+  color: #70dfff;
+  font-size: 1.05rem;
+}
+
+.message {
+  width: fit-content;
+  max-width: min(90%, 520px);
+}
+
+.message > span {
+  color: #7188a4;
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+}
+
+.message p {
+  margin: 7px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(151, 190, 225, 0.14);
+  border-radius: 4px 12px 12px;
+  color: #d7e7f7;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.userMessage {
+  align-self: flex-end;
+}
+
+.userMessage > span {
+  display: block;
+  text-align: right;
+}
+
+.userMessage p {
+  border-color: rgba(112, 223, 255, 0.2);
+  border-radius: 12px 4px 12px 12px;
+  background: rgba(27, 77, 108, 0.34);
+}
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #8296ae;
+  font-size: 0.72rem;
+}
+
+.thinking i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #70dfff;
+  animation: pulse 900ms ease-in-out infinite alternate;
+}
+
+.thinking i:nth-child(2) { animation-delay: 150ms; }
+.thinking i:nth-child(3) { animation-delay: 300ms; margin-right: 5px; }
+
+.error {
+  margin: 0 20px 12px;
+  color: #ffaaa9;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.composer {
+  padding: 13px;
+  border-top: 1px solid rgba(151, 190, 225, 0.12);
+}
+
+.composer textarea {
+  display: block;
+  width: 100%;
+  min-height: 66px;
+  padding: 9px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #e6f2ff;
+  font: inherit;
+  font-size: 0.8rem;
+  resize: vertical;
+}
+
+.composer textarea::placeholder {
+  color: #657b95;
+}
+
+.composerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 2px 1px;
+}
+
+.composerFooter > span {
+  color: #6f8299;
+  font-size: 0.64rem;
+}
+
+.composerFooter button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid rgba(112, 223, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(41, 126, 166, 0.27);
+  color: #dff8ff;
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.composerFooter button:disabled,
+.suggestion:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.roadmapPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.roadmapContent {
+  flex: 1;
+  padding: 23px 22px 8px;
+}
+
+.roadmapKicker {
+  margin-bottom: 12px;
+  color: #7799b4;
+  font-size: 0.58rem;
+}
+
+.roadmapContent > h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 450;
+  letter-spacing: -0.05em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.roadmapSummary {
+  margin: 10px 0 24px;
+  color: #91a5bc;
+  font-size: 0.77rem;
+  line-height: 1.65;
+}
+
+.phaseList {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phase {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 11px;
+  padding: 0 0 22px;
+}
+
+.phase:not(:last-child) > div {
+  border-bottom: 1px solid rgba(151, 190, 225, 0.12);
+  padding-bottom: 17px;
+}
+
+.phaseNumber {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border: 1px solid rgba(112, 223, 255, 0.22);
+  border-radius: 9px;
+  color: #70dfff;
+  font-size: 0.65rem;
+}
+
+.phase h4 {
+  margin: 0;
+  color: #dcecff;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.phaseHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 7px;
+}
+
+.phaseCompletion {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: #91a5bc;
+  font-size: 0.66rem;
+  cursor: pointer;
+}
+
+.phaseCompletion input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #70dfff;
+  cursor: pointer;
+}
+
+.phaseCompletion input:disabled {
+  cursor: wait;
+}
+
+.phaseCompleted h4 {
+  color: #70dfff;
+}
+
+.phase p,
+.phase ul {
+  margin: 0;
+  color: #8b9fb7;
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.phase ul {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  padding-left: 15px;
+}
+
+.phase li::marker {
+  color: #70dfff;
+}
+
+.roadmapEmpty .orbit {
+  display: grid;
+  place-items: center;
+  width: 91px;
+  height: 91px;
+  border: 1px solid rgba(112, 223, 255, 0.16);
+  border-radius: 50%;
+  box-shadow: 0 0 40px rgba(45, 154, 199, 0.1);
+}
+
+.roadmapEmpty .orbit span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #8edcff;
+  box-shadow: 0 0 24px rgba(112, 223, 255, 0.55);
+}
+
+.returnLink {
+  display: block;
+  padding: 15px 20px;
+  border-top: 1px solid rgba(151, 190, 225, 0.12);
+  font-size: 0.72rem;
+}
+
+@keyframes pulse {
+  to { opacity: 0.3; }
+}
+
+@media (max-width: 900px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chatPanel,
+  .roadmapPanel {
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 580px) {
+  .header {
+    min-height: 60px;
+  }
+
+  .workspace {
+    padding-top: 29px;
+  }
+
+  .projectHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .headingActions {
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .chatPanel,
+  .roadmapPanel {
+    min-height: 420px;
+  }
+
+  .conversation {
+    min-height: 300px;
+    padding: 17px;
+  }
+
+  .composerFooter {
+    align-items: flex-end;
+  }
+
+  .composerFooter > span {
+    max-width: 160px;
+    line-height: 1.5;
+  }
+}

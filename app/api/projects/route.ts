@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -36,9 +36,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    const body: unknown = await request.json();
 
-    const name = body.name?.trim();
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Request body is invalid" },
+        { status: 400 }
+      );
+    }
+
+    const name = "name" in body && typeof body.name === "string"
+      ? body.name.trim()
+      : "";
+    const description =
+      "description" in body && typeof body.description === "string"
+        ? body.description.trim()
+        : "";
 
     if (!name) {
       return NextResponse.json(
@@ -47,10 +60,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!description) {
+      return NextResponse.json(
+        { error: "Project description is required" },
+        { status: 400 }
+      );
+    }
+
     const project = await prisma.project.create({
       data: {
         name,
-        description: body.description?.trim() || null,
+        description,
         ownerId: user.id,
       },
     });

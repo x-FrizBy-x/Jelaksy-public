@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Jelaksy | The space for projects",
-  description: "Turn your ideas into a structured plan with Jelaksy",
+  description: "Turn your ideas into a structured roadmap with Jelaksy",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

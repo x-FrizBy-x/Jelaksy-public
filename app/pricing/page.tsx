@@ -105,7 +105,7 @@ import PlanetMark, {ArrowIcon} from "@/components/objects";
 					</div>
 
 					<div className="plan-grid">
-						{plans[planType].map((plan, index) => (
+						{plans[planType].map((plan) => (
 							<article className={`plan-card ${plan.featured ? "plan-card-featured" : ""}`} key={plan.name}>
 								{plan.featured && <span className="plan-badge">Most popular</span>}
 								<h2>{plan.name}</h2>

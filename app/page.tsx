@@ -39,7 +39,7 @@ function WorkspacePreview() {
 						<div className="plan-bar wide" /><div className="plan-bar" />
 					</div>
 					<div className="preview-plan faded">
-						<div className="plan-heading"><span>02</span><strong>Make a plan</strong><b>+</b></div>
+						<div className="plan-heading"><span>02</span><strong>Build the roadmap</strong><b>+</b></div>
 						<div className="plan-bar" />
 					</div>
 				</div>
@@ -64,9 +64,9 @@ export default function Home() {
 			<section className="hero">
 				<div className="hero-orbit orbit-large" aria-hidden="true" /><div className="hero-orbit orbit-small" aria-hidden="true" />
 				<div className="hero-copy">
-					<span className="eyebrow"><i /> The space to build what's next</span>
+					<span className="eyebrow"><i /> The space to build what&apos;s next</span>
 					<h1>Explore the future<br /><span>with Jelaksy</span></h1>
-					<p>Jelaksy helps you turn an idea into a structured plan and guides you through building it step by step.</p>
+					<p>Jelaksy helps you turn an idea into a structured roadmap and guides you through building it step by step.</p>
 					<a className="button button-primary" href="/authorization?mode=register">Get Started <ArrowIcon /></a>
 				</div>
 			</section>
@@ -74,11 +74,11 @@ export default function Home() {
 			<section className="intro section-band" id="about">
 				<div className="section-label"></div>
 				<div className="intro-copy"><span className="eyebrow muted">A clearer way forward</span><h2>Turn your ideas<br /><em>into reality.</em></h2></div>
-				<div className="intro-detail"><p>Jelaksy helps you turn an idea into a structured plan and guides you through building it step by step.</p><a className="button button-primary" href="/authorization">Start exploring <ArrowIcon /></a></div>
+				<div className="intro-detail"><p>Jelaksy helps you turn an idea into a structured roadmap and guides you through building it step by step.</p><a className="button button-primary" href="/authorization">Start exploring <ArrowIcon /></a></div>
 			</section>
 
 			<section className="preview-section" aria-labelledby="preview-title">
-				<div className="preview-heading"><span className="eyebrow muted">A glimpse of what's ahead</span><h2 id="preview-title">Give your next idea<br /><em>somewhere to go.</em></h2></div>
+				<div className="preview-heading"><span className="eyebrow muted">A glimpse of what&apos;s ahead</span><h2 id="preview-title">Give your next idea<br /><em>somewhere to go.</em></h2></div>
 				<WorkspacePreview />
 			</section>
 

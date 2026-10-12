@@ -1,6 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getCurrentUser } from "@/lib/session";
+import { ProjectRoadmapSchema } from "@/lib/project-planning";
+
+const PhaseCompletionSchema = z.object({
+  phaseIndex: z.number().int().nonnegative(),
+  completed: z.boolean(),
+}).strict();
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -66,7 +73,66 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const body = await request.json();
+    const body: unknown = await request.json();
+
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Request body is invalid" },
+        { status: 400 }
+      );
+    }
+
+    const fields = body as Record<string, unknown>;
+
+    if (fields.phaseCompletion !== undefined) {
+      const parsedCompletion = PhaseCompletionSchema.safeParse(fields.phaseCompletion);
+      if (!parsedCompletion.success || Object.keys(fields).length !== 1) {
+        return NextResponse.json(
+          { error: "Phase completion request is invalid" },
+          { status: 400 }
+        );
+      }
+
+      const project = await prisma.project.findFirst({
+        where: { id, ownerId: user.id },
+      });
+
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found" },
+          { status: 404 }
+        );
+      }
+
+      const parsedRoadmap = ProjectRoadmapSchema.safeParse(project.roadmap);
+      const { phaseIndex, completed } = parsedCompletion.data;
+      if (!parsedRoadmap.success || phaseIndex >= parsedRoadmap.data.phases.length) {
+        return NextResponse.json(
+          { error: "Project roadmap or phase was not found" },
+          { status: 409 }
+        );
+      }
+
+      const roadmap = {
+        ...parsedRoadmap.data,
+        phases: parsedRoadmap.data.phases.map((phase, index) =>
+          index === phaseIndex ? { ...phase, completed } : phase
+        ),
+      };
+      const result = await prisma.project.updateMany({
+        where: { id, ownerId: user.id },
+        data: { roadmap },
+      });
+
+      if (result.count === 0) {
+        return NextResponse.json(
+          { error: "Project not found" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({ roadmap });
+    }
 
     // Check that the project exists and belongs to this user
     const project = await prisma.project.findFirst({
@@ -87,15 +153,14 @@ export async function PATCH(
     // Only fields provided in the request will be updated.
     const data: {
       name?: string;
-      description?: string | null;
-      status?: "ACTIVE" | "COMPLETED" | "ARCHIVED";
+      description?: string;
     } = {};
 
     // Validate and update name only if provided
-    if (body.name !== undefined) {
+    if (fields.name !== undefined) {
       if (
-        typeof body.name !== "string" ||
-        !body.name.trim()
+        typeof fields.name !== "string" ||
+        !fields.name.trim()
       ) {
         return NextResponse.json(
           { error: "Name is invalid" },
@@ -103,50 +168,22 @@ export async function PATCH(
         );
       }
 
-      data.name = body.name.trim();
+      data.name = fields.name.trim();
     }
 
     // Validate and update description only if provided
-    if (
-      body.description !== undefined &&
-      typeof body.description !== "string" &&
-      body.description !== null
-    ) {
-      return NextResponse.json(
-        { error: "Description is invalid" },
-        { status: 400 }
-      );
-    }
-
-    if (body.description !== undefined) {
-      data.description =
-        typeof body.description === "string"
-          ? body.description.trim() || null
-          : null;
-    }
-
-    // Validate and update status only if provided
-    if (body.status !== undefined) {
-      const validStatuses = [
-        "ACTIVE",
-        "COMPLETED",
-        "ARCHIVED",
-      ];
-
+    if (fields.description !== undefined) {
       if (
-        typeof body.status !== "string" ||
-        !validStatuses.includes(body.status)
+        typeof fields.description !== "string" ||
+        !fields.description.trim()
       ) {
         return NextResponse.json(
-          { error: "Project status is invalid" },
+          { error: "Description is required" },
           { status: 400 }
         );
       }
 
-      data.status = body.status as
-        | "ACTIVE"
-        | "COMPLETED"
-        | "ARCHIVED";
+      data.description = fields.description.trim();
     }
 
     // Make sure at least one field was provided
@@ -241,4 +278,3 @@ export async function DELETE(
     );
   }
 }
-

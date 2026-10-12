@@ -20,6 +20,25 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Project chat and planning
+
+Project workspaces use LangChain's OpenAI integration to create and update structured roadmaps. Configure the model with server-side environment variables in `.env.local`:
+
+```env
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=gpt-4o-mini
+```
+
+To use a local Ollama model instead, install Ollama, download a tool-capable model (for example, `ollama pull qwen3:8b`), then set:
+
+```env
+OPENAI_API_KEY=ollama
+OPENAI_BASE_URL=http://localhost:11434/v1
+OPENAI_MODEL=qwen3:8b
+```
+
+Ollama ignores the API key, but the OpenAI-compatible client requires one, so `ollama` can be any placeholder value. Keep these variables server-side and do not prefix them with `NEXT_PUBLIC_`. Restart the Next.js server after changing the environment. The Ollama server must be running and reachable from the machine/container running Next.js; `localhost` refers to that same machine/container. The selected Ollama model must support tool calling for structured roadmap responses.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
