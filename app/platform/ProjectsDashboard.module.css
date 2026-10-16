@@ -478,6 +478,10 @@
   text-align: center;
 }
 
+.userMenuItem > .planIcon {
+  background: url("/icons/plan-link.svg") center / 16px 16px no-repeat;
+}
+
 .logoutItem:hover {
   background: rgba(255, 100, 100, 0.08);
   color: #ffaaa9;
@@ -519,9 +523,8 @@
   height: 37px;
   border: 1px solid rgba(112, 223, 255, 0.2);
   border-radius: 11px;
-  background: rgba(112, 223, 255, 0.07);
-  color: var(--accent);
-  font-size: 1.2rem;
+  background: url("/icons/project-card.svg") center / 22px 22px no-repeat,
+    rgba(112, 223, 255, 0.07);
 }
 
 .projectCard h3 {
@@ -583,9 +586,8 @@
   height: 54px;
   border: 1px solid rgba(112, 223, 255, 0.23);
   border-radius: 16px;
-  background: rgba(112, 223, 255, 0.07);
-  color: var(--accent);
-  font-size: 1.7rem;
+  background: url("/icons/projects-empty.svg") center / 32px 32px no-repeat,
+    rgba(112, 223, 255, 0.07);
 }
 
 .emptyState h3 {

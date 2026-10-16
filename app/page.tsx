@@ -32,7 +32,7 @@ function WorkspacePreview() {
 				</aside>
 				<div className="preview-content">
 					<span className="preview-kicker">A new direction</span>
-					<h3>Build something<br /><em>that matters.</em></h3>
+					<h3>Build something<br />that matters.</h3>
 					<p>Your ideas, gathered into a clear path forward.</p>
 					<div className="preview-plan">
 						<div className="plan-heading"><span>01</span><strong>Shape the idea</strong><b>+</b></div>
@@ -65,7 +65,7 @@ export default function Home() {
 				<div className="hero-orbit orbit-large" aria-hidden="true" /><div className="hero-orbit orbit-small" aria-hidden="true" />
 				<div className="hero-copy">
 					<span className="eyebrow"><i /> The space to build what&apos;s next</span>
-					<h1>Explore the future<br /><span>with Jelaksy</span></h1>
+					<h1><span>Explore the future<br />with Jelaksy</span></h1>
 					<p>Jelaksy helps you turn an idea into a structured roadmap and guides you through building it step by step.</p>
 					<a className="button button-primary" href="/authorization?mode=register">Get Started <ArrowIcon /></a>
 				</div>
@@ -73,12 +73,12 @@ export default function Home() {
 
 			<section className="intro section-band" id="about">
 				<div className="section-label"></div>
-				<div className="intro-copy"><span className="eyebrow muted">A clearer way forward</span><h2>Turn your ideas<br /><em>into reality.</em></h2></div>
+				<div className="intro-copy"><span className="eyebrow muted">A clearer way forward</span><h2>Turn your ideas<br />into reality.</h2></div>
 				<div className="intro-detail"><p>Jelaksy helps you turn an idea into a structured roadmap and guides you through building it step by step.</p><a className="button button-primary" href="/authorization">Start exploring <ArrowIcon /></a></div>
 			</section>
 
 			<section className="preview-section" aria-labelledby="preview-title">
-				<div className="preview-heading"><span className="eyebrow muted">A glimpse of what&apos;s ahead</span><h2 id="preview-title">Give your next idea<br /><em>somewhere to go.</em></h2></div>
+				<div className="preview-heading"><span className="eyebrow muted">A glimpse of what&apos;s ahead</span><h2 id="preview-title">Give your next idea<br />somewhere to go.</h2></div>
 				<WorkspacePreview />
 			</section>
 
@@ -87,7 +87,7 @@ export default function Home() {
 				<div className="cta-copy">
 					<span className="eyebrow">
 						<i /> Your next chapter starts here
-						</span><h2>Ready to<br /><em>explore?</em></h2>
+						</span><h2>Ready to<br />explore?</h2>
 						<Link className="button button-primary" href="/authorization?mode=register">Get Started <ArrowIcon /></Link>
 						</div>
 			</section>

@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import {
   ProjectChatMessageSchema,
   ProjectChatResponseSchema,
+  isRoadmapTaskComplete,
+  normalizeRoadmapTaskProgress,
   ProjectRoadmapSchema,
 } from "@/lib/project-planning";
 
@@ -73,9 +75,7 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const response = await chat.invoke([
       new SystemMessage(
-        `You are Jelaksy, a thoughtful project-planning partner. Help the user shape the project "${project.name}". ${
-          project.description ? `Project description: ${project.description}` : ""
-        } Reply conversationally and return a complete, practical project roadmap that reflects the latest conversation. Organize the roadmap into clear phases with actionable tasks. Keep the roadmap concise and realistic; use 3 to 6 phases and 2 to 5 tasks per phase when appropriate. If key information is missing, ask a focused question while still offering a useful draft roadmap.`
+        `You are Jelaksy, a thoughtful project-planning partner. Help the user shape the project "${project.name}". The user provided the following required project description as the starting brief: ${project.description || "No description is available for this older project."} Treat this description as the source of truth for the project and use it as the foundation for the roadmap. Do not ask the user to restate the project idea or provide a description. Reply conversationally and return a complete, practical roadmap that reflects both the description and the latest conversation. Organize it into clear phases with actionable tasks. Keep it concise and realistic, using as many phases and tasks per phase as the project actually needs. Let project complexity and dependencies determine the task count; do not force a fixed or uniform number. If a consequential detail is unclear, make a reasonable assumption, provide a useful draft anyway, and ask at most one focused follow-up question to refine it.`
       ),
       ...history,
       new HumanMessage(parsedBody.data.message),
@@ -86,7 +86,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       select: { roadmap: true },
     });
     const existingRoadmap = ProjectRoadmapSchema.safeParse(latestProject?.roadmap);
-    const roadmap = {
+    const roadmap = normalizeRoadmapTaskProgress({
       ...response.roadmap,
       phases: response.roadmap.phases.map((phase) => {
         const existingPhase = existingRoadmap.success
@@ -95,9 +95,20 @@ export async function POST(request: Request, { params }: RouteContext) {
             )
           : undefined;
 
-        return { ...phase, completed: existingPhase?.completed ?? false };
+        const taskCompletion = phase.tasks.map((task) => {
+          const existingTaskIndex = existingPhase?.tasks.indexOf(task) ?? -1;
+          return existingTaskIndex >= 0 && existingPhase
+            ? isRoadmapTaskComplete(existingPhase, existingTaskIndex)
+            : false;
+        });
+
+        return {
+          ...phase,
+          taskCompletion,
+          completed: existingPhase?.completed ?? false,
+        };
       }),
-    };
+    });
     const chatMessages = [
       ...parsedBody.data.history.slice(-18),
       { role: "user" as const, content: parsedBody.data.message },

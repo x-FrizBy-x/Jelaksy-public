@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ProjectChatMessage, ProjectRoadmap } from "@/lib/project-planning";
+import {
+  isRoadmapPhaseComplete,
+  isRoadmapTaskComplete,
+  normalizeRoadmapTaskProgress,
+  type ProjectChatMessage,
+  type ProjectRoadmap,
+} from "@/lib/project-planning";
 import styles from "./ProjectChat.module.css";
 
 type Project = {
@@ -22,11 +28,13 @@ export default function ProjectChat({
   initialMessages: ProjectChatMessage[];
 }) {
   const [messages, setMessages] = useState(initialMessages);
-  const [roadmap, setRoadmap] = useState(initialRoadmap);
+  const [roadmap, setRoadmap] = useState(
+    initialRoadmap ? normalizeRoadmapTaskProgress(initialRoadmap) : initialRoadmap
+  );
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [updatingPhase, setUpdatingPhase] = useState<number | null>(null);
+  const [updatingProgress, setUpdatingProgress] = useState<string | null>(null);
   const [roadmapError, setRoadmapError] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -76,44 +84,65 @@ export default function ProjectChat({
     }
   }, [messages, project.id, sending]);
 
-  async function updatePhaseCompletion(phaseIndex: number, completed: boolean) {
-    if (!roadmap || updatingPhase !== null) return;
+  async function updateTaskCompletion(
+    phaseIndex: number,
+    taskIndex: number,
+    completed: boolean
+  ) {
+    if (!roadmap || updatingProgress !== null) return;
 
     const previousRoadmap = roadmap;
-    const updatedRoadmap: ProjectRoadmap = {
+    const targetTaskIndex = roadmap.phases
+      .slice(0, phaseIndex)
+      .reduce((count, phase) => count + phase.tasks.length, 0) + taskIndex;
+    let currentTaskIndex = 0;
+    const updatedRoadmap = normalizeRoadmapTaskProgress({
       ...roadmap,
-      phases: roadmap.phases.map((phase, index) =>
-        index === phaseIndex ? { ...phase, completed } : phase
-      ),
-    };
+      phases: roadmap.phases.map((phase) => {
+        const taskCompletion = phase.tasks.map((_, currentIndex) => {
+          const taskComplete = isRoadmapTaskComplete(phase, currentIndex);
+          const shouldComplete = currentTaskIndex < targetTaskIndex
+            ? taskComplete
+            : currentTaskIndex === targetTaskIndex
+              ? completed
+              : completed && taskComplete;
+          currentTaskIndex += 1;
+          return shouldComplete;
+        });
+
+        return { ...phase, taskCompletion };
+      }),
+    });
 
     setRoadmap(updatedRoadmap);
-    setUpdatingPhase(phaseIndex);
+    setUpdatingProgress(`task-${phaseIndex}-${taskIndex}`);
     setRoadmapError("");
 
     try {
       const response = await fetch(`/api/projects/${project.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phaseCompletion: { phaseIndex, completed } }),
+        body: JSON.stringify({
+          taskCompletion: { phaseIndex, taskIndex, completed },
+        }),
       });
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Could not update phase completion.");
+        throw new Error(data.error || "Could not update task completion.");
       }
 
       setRoadmap(data.roadmap);
     } catch (updateError) {
-      console.error("Failed to update project phase completion:", updateError);
+      console.error("Failed to update project task completion:", updateError);
       setRoadmap(previousRoadmap);
       setRoadmapError(
         updateError instanceof Error
           ? updateError.message
-          : "Could not update phase completion. Please try again."
+          : "Could not update task completion. Please try again."
       );
     } finally {
-      setUpdatingPhase(null);
+      setUpdatingProgress(null);
     }
   }
 
@@ -167,11 +196,12 @@ export default function ProjectChat({
   return (
     <div className={styles.workspace}>
       <section className={styles.projectHeading}>
-        <div>
+        <div className={styles.projectTitle}>
           <p className={styles.eyebrow}>PROJECT WORKSPACE</p>
           <h1>{project.name}</h1>
         </div>
         <div className={styles.headingActions}>
+          <Link href="/platform" className={styles.backLink}>← Back to projects</Link>
           <button
             className={styles.deleteButton}
             type="button"
@@ -185,7 +215,7 @@ export default function ProjectChat({
       <div className={styles.columns}>
         <section className={styles.chatPanel} aria-label="Project planning chat">
           <div className={styles.panelHeader}>
-            <div className={styles.assistantMark}>✳</div>
+            <span className={styles.assistantMark} aria-hidden="true" />
             <div>
               <h2>Planning assistant</h2>
               <p>Explore the idea, then shape a roadmap together.</p>
@@ -195,7 +225,7 @@ export default function ProjectChat({
           <div className={styles.conversation} aria-live="polite">
             {messages.length === 0 && pendingMessage === null ? (
               <div className={styles.welcomeMessage}>
-                <span className={styles.welcomeGlyph}>✧</span>
+                <span className={styles.welcomeGlyph} aria-hidden="true" />
                 <h3>Let&apos;s make a roadmap.</h3>
                 <p>
                   Tell me what success looks like, or start with a practical
@@ -263,7 +293,7 @@ export default function ProjectChat({
 
         <aside className={styles.roadmapPanel} aria-label="Project roadmap">
           <div className={styles.panelHeader}>
-            <div className={styles.roadmapIcon}>⌘</div>
+            <span className={styles.roadmapIcon} aria-hidden="true" />
             <div>
               <h2>Your roadmap</h2>
               <p>{roadmap ? `${roadmap.phases.length} phases` : "Takes shape as you chat"}</p>
@@ -289,21 +319,56 @@ export default function ProjectChat({
                         <label className={styles.phaseCompletion}>
                           <input
                             type="checkbox"
-                            checked={phase.completed ?? false}
-                            disabled={updatingPhase !== null}
-                            onChange={(event) =>
-                              void updatePhaseCompletion(index, event.target.checked)
-                            }
-                            aria-label={`Mark phase ${index + 1}: ${phase.title} as ${
-                              phase.completed ? "incomplete" : "complete"
-                            }`}
+                            checked={isRoadmapPhaseComplete(phase)}
+                            disabled
+                            aria-label={`Phase ${index + 1}: ${phase.title} completion status`}
                           />
                           <span>Complete</span>
                         </label>
                       </div>
                       <p>{phase.description}</p>
-                      <ul>
-                        {phase.tasks.map((task) => <li key={task}>{task}</li>)}
+                      <ul className={styles.taskList}>
+                        {phase.tasks.map((task, taskIndex) => {
+                          const completed = isRoadmapTaskComplete(phase, taskIndex);
+                          const previousTasksComplete = roadmap.phases
+                            .slice(0, index)
+                            .every((previousPhase) =>
+                              previousPhase.tasks.every((_, previousTaskIndex) =>
+                                isRoadmapTaskComplete(previousPhase, previousTaskIndex)
+                              )
+                            ) && phase.tasks
+                              .slice(0, taskIndex)
+                              .every((_, previousTaskIndex) =>
+                                isRoadmapTaskComplete(phase, previousTaskIndex)
+                              );
+                          const disabled =
+                            updatingProgress !== null ||
+                            (!completed && !previousTasksComplete);
+
+                          return (
+                            <li
+                              className={`${styles.taskItem} ${completed ? styles.taskCompleted : ""}`}
+                              key={`${taskIndex}-${task}`}
+                            >
+                              <label className={styles.taskCompletion}>
+                                <input
+                                  type="checkbox"
+                                  checked={completed}
+                                  disabled={disabled}
+                                  onChange={(event) =>
+                                    void updateTaskCompletion(
+                                      index,
+                                      taskIndex,
+                                      event.target.checked
+                                    )
+                                  }
+                                  aria-label={`Mark task ${taskIndex + 1} in phase ${index + 1}: ${task} as ${completed ? "incomplete" : "complete"}`}
+                                />
+                                <span>{task}</span>
+                              </label>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   </li>
@@ -317,7 +382,6 @@ export default function ProjectChat({
               <p>Start chatting to create phases and turn the idea into actionable steps.</p>
             </div>
           )}
-          <Link href="/platform" className={styles.returnLink}>← Back to your workspace</Link>
         </aside>
       </div>
       {deleteDialogOpen && (

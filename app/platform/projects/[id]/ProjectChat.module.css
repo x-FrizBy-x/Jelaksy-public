@@ -3,33 +3,7 @@
   color: #edf5ff;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 66px;
-  padding: 0 clamp(18px, 5vw, 64px);
-  border-bottom: 1px solid rgba(151, 190, 225, 0.14);
-  background: rgba(5, 12, 25, 0.52);
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.06em;
-}
-
-.brand :global(.planet-mark) {
-  transform: scale(0.82);
-  transform-origin: left center;
-  width: 27px;
-}
-
-.backLink,
-.returnLink {
+.backLink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -44,8 +18,7 @@
   transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
-.backLink:hover,
-.returnLink:hover {
+.backLink:hover {
   border-color: rgba(112, 223, 255, 0.55);
   background: rgba(112, 223, 255, 0.13);
   color: #8edcff;
@@ -59,10 +32,21 @@
 
 .projectHeading {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 22px;
   margin-bottom: 30px;
+}
+
+.projectTitle {
+  min-width: 0;
+}
+
+.headingActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
 }
 
 .eyebrow,
@@ -80,12 +64,6 @@
   font-weight: 450;
   letter-spacing: -0.07em;
   overflow-wrap: anywhere;
-}
-
-.headingActions {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
 }
 
 .deleteButton,
@@ -223,7 +201,16 @@
   border-radius: 11px;
   background: rgba(112, 223, 255, 0.07);
   color: #70dfff;
-  font-size: 1.1rem;
+}
+
+.assistantMark {
+  background: url("/icons/planning-assistant.svg") center / 21px 21px no-repeat,
+    rgba(112, 223, 255, 0.07);
+}
+
+.roadmapIcon {
+  background: url("/icons/roadmap-panel.svg") center / 21px 21px no-repeat,
+    rgba(112, 223, 255, 0.07);
 }
 
 .panelHeader h2 {
@@ -268,8 +255,8 @@
   height: 47px;
   border: 1px solid rgba(112, 223, 255, 0.22);
   border-radius: 15px;
-  color: #70dfff;
-  font-size: 1.45rem;
+  background: url("/icons/roadmap-welcome.svg") center / 26px 26px no-repeat,
+    rgba(112, 223, 255, 0.035);
 }
 
 .welcomeMessage h3,
@@ -516,19 +503,84 @@
   gap: 6px;
   color: #91a5bc;
   font-size: 0.66rem;
-  cursor: pointer;
+  cursor: default;
 }
 
 .phaseCompletion input {
-  width: 15px;
-  height: 15px;
+  appearance: none;
+  display: grid;
+  place-items: center;
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
   margin: 0;
-  accent-color: #70dfff;
+  border: 1px solid rgba(151, 190, 225, 0.38);
+  border-radius: 5px;
+  background: rgba(4, 13, 25, 0.7);
+  cursor: default;
+  transition: background 150ms ease, border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.taskCompletion input {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  border: 1px solid rgba(151, 190, 225, 0.38);
+  border-radius: 4px;
+  background: rgba(4, 13, 25, 0.7);
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.phaseCompletion input:checked {
+  border-color: #70dfff;
+  background: #45bce8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.2 2.8 2.8 6.2-6.1' fill='none' stroke='%23081727' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 13px;
+}
+
+.taskCompletion input:checked {
+  border-color: #70dfff;
+  background: #45bce8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.2 2.8 2.8 6.2-6.1' fill='none' stroke='%23081727' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 12px;
+}
+
+.phaseCompletion input:focus-visible {
+  outline: 2px solid rgba(112, 223, 255, 0.8);
+  outline-offset: 3px;
+}
+
+.taskCompletion input:focus-visible {
+  outline: 2px solid rgba(112, 223, 255, 0.8);
+  outline-offset: 3px;
+}
+
+.phaseCompletion input:disabled,
+.taskCompletion input:disabled {
+  cursor: default;
+}
+
+.taskCompletion {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #8b9fb7;
   cursor: pointer;
 }
 
-.phaseCompletion input:disabled {
-  cursor: wait;
+.taskCompletion:has(input:disabled) {
+  cursor: default;
 }
 
 .phaseCompleted h4 {
@@ -547,11 +599,14 @@
   display: grid;
   gap: 5px;
   margin-top: 10px;
-  padding-left: 15px;
+  padding: 0;
+  list-style: none;
 }
 
-.phase li::marker {
-  color: #70dfff;
+.taskCompleted .taskCompletion > span {
+  color: #7193a9;
+  text-decoration: line-through;
+  text-decoration-color: rgba(112, 223, 255, 0.4);
 }
 
 .roadmapEmpty .orbit {
@@ -572,13 +627,6 @@
   box-shadow: 0 0 24px rgba(112, 223, 255, 0.55);
 }
 
-.returnLink {
-  display: block;
-  padding: 15px 20px;
-  border-top: 1px solid rgba(151, 190, 225, 0.12);
-  font-size: 0.72rem;
-}
-
 @keyframes pulse {
   to { opacity: 0.3; }
 }
@@ -595,10 +643,6 @@
 }
 
 @media (max-width: 580px) {
-  .header {
-    min-height: 60px;
-  }
-
   .workspace {
     padding-top: 29px;
   }
@@ -609,9 +653,8 @@
   }
 
   .headingActions {
-    align-items: flex-end;
-    justify-content: space-between;
     width: 100%;
+    justify-content: space-between;
   }
 
   .chatPanel,

@@ -200,7 +200,7 @@ export default function ProjectsDashboard({
                   <span>⚙</span> Settings
                 </button>
                 <Link className={styles.userMenuItem} href="/pricing">
-                  <span>✧</span> Your plan
+                  <span className={styles.planIcon} aria-hidden="true" /> Your plan
                 </Link>
                 <form action={logoutAction} className={styles.logoutForm}>
                   <button className={`${styles.userMenuItem} ${styles.logoutItem}`} type="submit">
@@ -323,7 +323,7 @@ export default function ProjectsDashboard({
               </div>
             ) : displayedProjects.length === 0 ? (
               <div className={styles.emptyState}>
-                <div className={styles.emptySymbol}>✳</div>
+                <div className={styles.emptySymbol} aria-hidden="true" />
                 <h3>
                   {view === "deadlines"
                     ? "Nothing due just yet."
@@ -351,9 +351,7 @@ export default function ProjectsDashboard({
                 {displayedProjects.map((project) => (
                   <article className={styles.projectCard} key={project.id}>
                     <div className={styles.cardTop}>
-                      <span className={styles.projectGlyph}>
-                        ✳
-                      </span>
+                      <span className={styles.projectGlyph} aria-hidden="true" />
                     </div>
 
                     <Link href={`/platform/projects/${project.id}`} className={styles.projectCardLink}>

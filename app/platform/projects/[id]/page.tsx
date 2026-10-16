@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import PlanetMark from "@/components/objects";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import {
@@ -38,13 +36,6 @@ export default async function ProjectPage({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/platform" className={styles.brand} aria-label="Back to Jelaksy workspace">
-          <PlanetMark />
-          <span>Jelaksy</span>
-        </Link>
-        <Link href="/platform" className={styles.backLink}>← All projects</Link>
-      </header>
       <ProjectChat
         project={{
           id: project.id,
