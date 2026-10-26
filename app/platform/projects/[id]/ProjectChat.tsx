@@ -55,7 +55,7 @@ export default function ProjectChat({
       const response = await fetch(`/api/projects/${project.id}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content, history: messages }),
+        body: JSON.stringify({ message: content }),
       });
       const data = await response.json();
 

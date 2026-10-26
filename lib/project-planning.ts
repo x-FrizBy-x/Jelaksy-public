@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export const MAX_PROJECT_NAME_LENGTH = 100;
+export const MAX_PROJECT_DESCRIPTION_LENGTH = 1000;
+export const MAX_CHAT_MESSAGE_LENGTH = 4000;
+export const MAX_STORED_CHAT_MESSAGES = 20;
+
 const ProjectRoadmapPhaseSchema = z.object({
   title: z.string(),
   description: z.string(),

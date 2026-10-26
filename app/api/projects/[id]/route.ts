@@ -4,6 +4,8 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/session";
 import {
   isRoadmapTaskComplete,
+  MAX_PROJECT_DESCRIPTION_LENGTH,
+  MAX_PROJECT_NAME_LENGTH,
   normalizeRoadmapTaskProgress,
   ProjectRoadmapSchema,
 } from "@/lib/project-planning";
@@ -207,6 +209,13 @@ export async function PATCH(
         );
       }
 
+      if (fields.name.trim().length > MAX_PROJECT_NAME_LENGTH) {
+        return NextResponse.json(
+          { error: `Name must be ${MAX_PROJECT_NAME_LENGTH} characters or fewer` },
+          { status: 400 }
+        );
+      }
+
       data.name = fields.name.trim();
     }
 
@@ -218,6 +227,13 @@ export async function PATCH(
       ) {
         return NextResponse.json(
           { error: "Description is required" },
+          { status: 400 }
+        );
+      }
+
+      if (fields.description.trim().length > MAX_PROJECT_DESCRIPTION_LENGTH) {
+        return NextResponse.json(
+          { error: `Description must be ${MAX_PROJECT_DESCRIPTION_LENGTH} characters or fewer` },
           { status: 400 }
         );
       }

@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import {
+  MAX_PROJECT_DESCRIPTION_LENGTH,
+  MAX_PROJECT_NAME_LENGTH,
+} from "@/lib/project-planning";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -63,6 +67,20 @@ export async function POST(request: Request) {
     if (!description) {
       return NextResponse.json(
         { error: "Project description is required" },
+        { status: 400 }
+      );
+    }
+
+    if (name.length > MAX_PROJECT_NAME_LENGTH) {
+      return NextResponse.json(
+        { error: `Project name must be ${MAX_PROJECT_NAME_LENGTH} characters or fewer` },
+        { status: 400 }
+      );
+    }
+
+    if (description.length > MAX_PROJECT_DESCRIPTION_LENGTH) {
+      return NextResponse.json(
+        { error: `Description must be ${MAX_PROJECT_DESCRIPTION_LENGTH} characters or fewer` },
         { status: 400 }
       );
     }

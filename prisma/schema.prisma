@@ -27,6 +27,18 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   projects      Project[]
+  chatUsage     ChatUsage[]
+}
+
+model ChatUsage {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tokens    Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model Project {
