@@ -253,6 +253,7 @@ a { color: inherit; text-decoration: none; }
 .authorization-form input { background: rgba(4, 11, 22, .68); border: 1px solid rgba(164, 211, 237, .2); color: var(--foreground); font: inherit; font-size: 13px; margin-bottom: 7px; outline: 0; padding: 13px 14px; width: 100%; }
 .authorization-form input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(142, 220, 255, .1); }
 .authorization-form input::placeholder { color: #64788e; }
+.authorization-error { color: #ff8a8a; font-size: 12px; margin: 0; min-height: 0; }
 .authorization-submit { border: 0; cursor: pointer; margin-top: 8px; width: 100%; }
 .authorization-register { color: #8194a8; font-size: 12px; margin: 20px 0 0; }
 .authorization-register a { color: var(--cyan); font-weight: 700; }
