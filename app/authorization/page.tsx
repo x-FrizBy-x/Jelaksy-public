@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import PlanetMark from "@/components/objects";
-import { registerUser, loginUser } from "./actions";
+import AuthForm from "./AuthForm";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 
@@ -51,21 +51,7 @@ export default async function AuthorizationPage({ searchParams }: AuthorizationP
 
 				<div className="authorization-divider"><span>or {isRegistering ? "register" : "continue"} with email</span></div>
 
-				<form className="authorization-form" action={isRegistering ? registerUser : loginUser}>
-					{isRegistering && <>
-						<label htmlFor="name">Name</label>
-						<input id="name" name="name" type="text" placeholder="Your name" autoComplete="name" />
-					</>}
-					<label htmlFor="email">Email address</label>
-					<input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" />
-					<label htmlFor="password">Password</label>
-					<input id="password" name="password" type="password" placeholder={isRegistering ? "Create a password" : "Enter your password"} autoComplete={isRegistering ? "new-password" : "current-password"} />
-					{isRegistering && <>
-						<label htmlFor="confirm-password">Confirm password</label>
-						<input id="confirm-password" name="confirm-password" type="password" placeholder="Confirm your password" autoComplete="new-password" />
-					</>}
-					<button className="button button-primary authorization-submit" type="submit">{isRegistering ? "Create account" : "Log in"}</button>
-				</form>
+				<AuthForm key={mode} isRegistering={isRegistering} />
 
 				<p className="authorization-register">{isRegistering ? "Already have an account?" : "Don't have an account yet?"} <a href={isRegistering ? "/authorization" : "/authorization?mode=register"}>{isRegistering ? "Log in" : "Register"}</a></p>
 			</section>
