@@ -2,7 +2,7 @@ import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages
 import { ChatOpenAI } from "@langchain/openai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/session";
+import { getOwnedProject, projectNotFound, requireUser } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { reserveChatUsage, settleChatUsage } from "@/lib/rate-limit";
 import {
@@ -30,19 +30,15 @@ const model = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
 const baseURL = process.env.OPENAI_BASE_URL?.trim();
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const { id } = await params;
-  const project = await prisma.project.findFirst({
-    where: { id, ownerId: user.id },
-  });
+  const project = await getOwnedProject(id, user.id);
 
   if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    return projectNotFound();
   }
 
   if (!process.env.OPENAI_API_KEY) {

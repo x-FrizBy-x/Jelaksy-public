@@ -7,6 +7,7 @@ import {
   isRoadmapPhaseComplete,
   isRoadmapTaskComplete,
   normalizeRoadmapTaskProgress,
+  setTaskCompleted,
   type ProjectChatMessage,
   type ProjectRoadmap,
 } from "@/lib/project-planning";
@@ -92,39 +93,26 @@ export default function ProjectChat({
     if (!roadmap || updatingProgress !== null) return;
 
     const previousRoadmap = roadmap;
-    const targetTaskIndex = roadmap.phases
-      .slice(0, phaseIndex)
-      .reduce((count, phase) => count + phase.tasks.length, 0) + taskIndex;
-    let currentTaskIndex = 0;
-    const updatedRoadmap = normalizeRoadmapTaskProgress({
-      ...roadmap,
-      phases: roadmap.phases.map((phase) => {
-        const taskCompletion = phase.tasks.map((_, currentIndex) => {
-          const taskComplete = isRoadmapTaskComplete(phase, currentIndex);
-          const shouldComplete = currentTaskIndex < targetTaskIndex
-            ? taskComplete
-            : currentTaskIndex === targetTaskIndex
-              ? completed
-              : completed && taskComplete;
-          currentTaskIndex += 1;
-          return shouldComplete;
-        });
-
-        return { ...phase, taskCompletion };
-      }),
-    });
+    const optimistic = setTaskCompleted(roadmap, phaseIndex, taskIndex, completed);
+    if (!optimistic.ok) {
+      setRoadmapError(
+        optimistic.reason === "blocked"
+          ? "Complete the previous task before continuing."
+          : "Project roadmap task was not found"
+      );
+      return;
+    }
+    const updatedRoadmap = optimistic.roadmap;
 
     setRoadmap(updatedRoadmap);
     setUpdatingProgress(`task-${phaseIndex}-${taskIndex}`);
     setRoadmapError("");
 
     try {
-      const response = await fetch(`/api/projects/${project.id}`, {
+      const response = await fetch(`/api/projects/${project.id}/tasks`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          taskCompletion: { phaseIndex, taskIndex, completed },
-        }),
+        body: JSON.stringify({ phaseIndex, taskIndex, completed }),
       });
       const data = await response.json();
 

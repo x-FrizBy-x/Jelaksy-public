@@ -1,26 +1,35 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { cache } from "react";
+import { getEnv } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 
-const secret = process.env.SESSION_SECRET;
-
-if (!secret) {
-  throw new Error("SESSION_SECRET is not set.");
-}
-
-const secretKey = new TextEncoder().encode(secret);
+const getSecretKey = () => new TextEncoder().encode(getEnv().SESSION_SECRET);
 
 export async function createSession(userId: number) {
   return new SignJWT({ userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("3d")
-    .sign(secretKey);
+    .sign(getSecretKey());
+}
+
+export async function setSessionCookie(userId: number) {
+  const session = await createSession(userId);
+  const cookieStore = await cookies();
+
+  cookieStore.set("session", session, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 3,
+  });
 }
 
 export async function verifySession(token: string) {
   try {
-    const { payload } = await jwtVerify(token, secretKey);
+    const { payload } = await jwtVerify(token, getSecretKey());
 
     return {
       userId:
@@ -33,7 +42,8 @@ export async function verifySession(token: string) {
   }
 }
 
-export async function getCurrentUser() {
+// Deduplicated per request, so a page and its children share one lookup.
+export const getCurrentUser = cache(async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
 
@@ -51,5 +61,10 @@ export async function getCurrentUser() {
     where: {
       id: session.userId,
     },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
   });
-}
+});
