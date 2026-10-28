@@ -35,32 +35,32 @@ Suggested order: #1, then #2 and #3, then extract pure logic (#5) and add tests 
   - Why it matters: users lose checked-off work while refining the plan, the app's main flow.
   - Fix: give phases and tasks stable IDs, pass the existing roadmap and IDs to the model and ask it to preserve IDs for unchanged items (or have it return edits instead of a full rewrite).
 
-- [ ] **5. `PATCH` handler is a 200-line, hard-to-follow function** — Medium, ~3 hrs
+- [x] **5. `PATCH` handler is a 200-line, hard-to-follow function** — Medium, ~3 hrs
   - Where: `app/api/projects/[id]/route.ts`
   - Problem: one handler covers task toggles, rename/description edits, and shared auth/ownership steps. The toggle block re-implements the "previous tasks must be complete" rule with counters and nested ternaries, duplicating `normalizeRoadmapTaskProgress`. The 401 block and `findFirst` ownership check repeat in every handler; cookie options are copy-pasted between register and login.
   - Why it matters: progress-rule changes must be made in two places, and each new route copies more boilerplate.
   - Fix:
-    - [ ] Extract a pure `setTaskCompleted(roadmap, phaseIndex, taskIndex, completed)` into `lib/project-planning.ts`
-    - [ ] Add `requireUser()` and `getOwnedProject(id, userId)` helpers
-    - [ ] Add `setSessionCookie()` for the shared cookie options
-    - [ ] Split task toggling into its own route (e.g. `PATCH .../tasks`)
+    - [x] Extract a pure `setTaskCompleted(roadmap, phaseIndex, taskIndex, completed)` into `lib/project-planning.ts` — done, also used by `ProjectChat.tsx`
+    - [x] Add `requireUser()` and `getOwnedProject(id, userId)` helpers — done, `lib/api.ts`
+    - [x] Add `setSessionCookie()` for the shared cookie options — done, in `lib/session.ts`
+    - [x] Split task toggling into its own route (e.g. `PATCH .../tasks`) — done: `PATCH /api/projects/[id]/tasks`
 
 - [ ] **6. Lost updates from read-modify-write on JSON columns** — Medium, ~2 hrs
   - Where: PATCH task-toggle path and the chat route
   - Problem: both read the roadmap, modify it in memory, and write the whole JSON back. Two quick checkbox clicks, or a click during a slow AI call, can overwrite each other.
   - Fix: optimistic concurrency with a `version` column (update fails on conflict), or a transaction with `SELECT ... FOR UPDATE`.
 
-- [ ] **7. List endpoint over-fetches; every request re-queries the user** — Medium, ~1 hr
+- [x] **7. List endpoint over-fetches; every request re-queries the user** — Medium, ~1 hr
   - Where: `app/api/projects/route.ts` GET, `lib/session.ts`
   - Problem: the list returns full rows including `roadmap` and `chatMessages` JSON for every project. `getCurrentUser()` runs `findUnique` (loading `passwordHash`) on every call, from both pages and API routes.
   - Fix:
-    - [ ] `select` only the fields the list needs; fetch details per project
-    - [ ] Add `select` to `getCurrentUser` and wrap it in React `cache()`
+    - [x] `select` only the fields the list needs; fetch details per project
+    - [x] Add `select` to `getCurrentUser` and wrap it in React `cache()`
 
-- [ ] **8. `SESSION_SECRET` checked at import time; `DATABASE_URL` never checked** — Low–Medium, ~30 min
+- [x] **8. `SESSION_SECRET` checked at import time; `DATABASE_URL` never checked** — Low–Medium, ~30 min
   - Where: `lib/session.ts`, `lib/prisma.ts`
   - Problem: `session.ts` throws on import if the secret is missing, which can break `next build` in CI without secrets and surfaces in unrelated places. `prisma.ts` uses `DATABASE_URL!` with no check.
-  - Fix: validate env lazily in one `lib/env.ts` with Zod and a clear message.
+  - Fix: validate env lazily in one `lib/env.ts` with Zod and a clear message. — done: `lib/env.ts`, lazy Prisma client
 
 - [ ] **9. No tests for the logic that matters** — Medium, ~half a day
   - Where: none exist

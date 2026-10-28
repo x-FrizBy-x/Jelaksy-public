@@ -1,20 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { getCurrentUser } from "@/lib/session";
+import { getOwnedProject, projectNotFound, requireUser } from "@/lib/api";
 import {
-  isRoadmapTaskComplete,
   MAX_PROJECT_DESCRIPTION_LENGTH,
   MAX_PROJECT_NAME_LENGTH,
-  normalizeRoadmapTaskProgress,
-  ProjectRoadmapSchema,
 } from "@/lib/project-planning";
-
-const TaskCompletionSchema = z.object({
-  phaseIndex: z.number().int().nonnegative(),
-  taskIndex: z.number().int().nonnegative(),
-  completed: z.boolean(),
-}).strict();
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -24,30 +14,17 @@ export async function GET(
   request: Request,
   { params }: RouteContext
 ) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const { id } = await params;
 
   try {
-    const project = await prisma.project.findFirst({
-      where: {
-        id: id,
-        ownerId: user.id,
-      },
-    });
+    const project = await getOwnedProject(id, user.id);
 
     if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return projectNotFound();
     }
 
     return NextResponse.json(project);
@@ -68,14 +45,9 @@ export async function PATCH(
   request: Request,
   { params }: RouteContext
 ) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const { id } = await params;
 
@@ -91,103 +63,11 @@ export async function PATCH(
 
     const fields = body as Record<string, unknown>;
 
-    if (fields.phaseCompletion !== undefined) {
-      return NextResponse.json(
-        { error: "Phase completion is derived from its tasks." },
-        { status: 400 }
-      );
-    }
-
-    if (fields.taskCompletion !== undefined) {
-      const parsedCompletion = TaskCompletionSchema.safeParse(fields.taskCompletion);
-      if (!parsedCompletion.success || Object.keys(fields).length !== 1) {
-        return NextResponse.json(
-          { error: "Task completion request is invalid" },
-          { status: 400 }
-        );
-      }
-
-      const project = await prisma.project.findFirst({ where: { id, ownerId: user.id } });
-      if (!project) {
-        return NextResponse.json({ error: "Project not found" }, { status: 404 });
-      }
-
-      const parsedRoadmap = ProjectRoadmapSchema.safeParse(project.roadmap);
-      if (!parsedRoadmap.success) {
-        return NextResponse.json(
-          { error: "Project roadmap was not found" },
-          { status: 409 }
-        );
-      }
-
-      const roadmap = normalizeRoadmapTaskProgress(parsedRoadmap.data);
-      const { phaseIndex, taskIndex, completed } = parsedCompletion.data;
-      if (
-        phaseIndex >= roadmap.phases.length ||
-        taskIndex >= (roadmap.phases[phaseIndex]?.tasks.length ?? 0)
-      ) {
-        return NextResponse.json(
-          { error: "Project roadmap task was not found" },
-          { status: 409 }
-        );
-      }
-
-      const targetTaskIndex = roadmap.phases
-        .slice(0, phaseIndex)
-        .reduce((count, phase) => count + phase.tasks.length, 0) + taskIndex;
-      const tasksBeforeTarget = roadmap.phases.flatMap((phase) =>
-        phase.tasks.map((_, index) => isRoadmapTaskComplete(phase, index))
-      ).slice(0, targetTaskIndex);
-      if (completed && tasksBeforeTarget.some((taskComplete) => !taskComplete)) {
-        return NextResponse.json(
-          { error: "Complete the previous task before continuing." },
-          { status: 409 }
-        );
-      }
-
-      let currentTaskIndex = 0;
-      const updatedRoadmap = normalizeRoadmapTaskProgress({
-        ...roadmap,
-        phases: roadmap.phases.map((phase) => {
-          const taskCompletion = phase.tasks.map((_, currentIndex) => {
-            const wasComplete = isRoadmapTaskComplete(phase, currentIndex);
-            const nextComplete = currentTaskIndex < targetTaskIndex
-              ? wasComplete
-              : currentTaskIndex === targetTaskIndex
-                ? completed
-                : completed && wasComplete;
-            currentTaskIndex += 1;
-            return nextComplete;
-          });
-
-          return { ...phase, taskCompletion };
-        }),
-      });
-      const result = await prisma.project.updateMany({
-        where: { id, ownerId: user.id },
-        data: { roadmap: updatedRoadmap },
-      });
-
-      if (result.count === 0) {
-        return NextResponse.json({ error: "Project not found" }, { status: 404 });
-      }
-
-      return NextResponse.json({ roadmap: updatedRoadmap });
-    }
-
     // Check that the project exists and belongs to this user
-    const project = await prisma.project.findFirst({
-      where: {
-        id,
-        ownerId: user.id,
-      },
-    });
+    const project = await getOwnedProject(id, user.id);
 
     if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return projectNotFound();
     }
 
     // Start with an empty object.
@@ -289,31 +169,18 @@ export async function DELETE(
   request: Request,
   { params }: RouteContext
 ) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const { id } = await params;
 
   try {
 
-    const project = await prisma.project.findFirst({
-      where: {
-        id,
-        ownerId: user.id,
-      },
-    });
+    const project = await getOwnedProject(id, user.id);
 
     if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return projectNotFound();
     }
 
     await prisma.project.deleteMany({

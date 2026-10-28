@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 import { cookies, headers } from "next/headers";
-import { createSession } from "@/lib/session";
+import { setSessionCookie } from "@/lib/session";
 import { redirect } from "next/navigation";
 import {
   clearLoginFailures,
@@ -49,19 +49,6 @@ const RegisterSchema = z
 // same cost as real hashes (bcrypt.hash(password, 12) below).
 const DUMMY_PASSWORD_HASH =
   "$2b$12$bx2LmbbFl2eAQQv0xABtXeGse8kt7om/hyh7JdwD913ctU3lEptoK";
-
-async function setSessionCookie(userId: number) {
-  const session = await createSession(userId);
-  const cookieStore = await cookies();
-
-  cookieStore.set("session", session, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 3,
-  });
-}
 
 async function getClientIp() {
   const headerList = await headers();
