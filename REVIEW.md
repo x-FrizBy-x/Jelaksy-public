@@ -29,7 +29,7 @@ Suggested order: #1, then #2 and #3, then extract pure logic (#5) and add tests 
     - [x] Run a dummy `bcrypt.compare` when the user isn't found
     - [x] Add basic login throttling — 5 failures/15 min per email, 20 per IP, `LoginAttempt` table, `lib/login-throttle.ts`
 
-- [ ] **4. Progress is lost whenever the AI rewords a task** — Medium, ~half a day
+- [x] **4. Progress is lost whenever the AI rewords a task** — Medium, ~half a day
   - Where: chat route merge logic, `lib/project-planning.ts`
   - Problem: the model regenerates the whole roadmap each turn; progress is restored by exact phase title and exact task text, so any rewording resets checkboxes. `completed: existingPhase?.completed ?? false` is redundant because `normalizeRoadmapTaskProgress` recomputes it.
   - Why it matters: users lose checked-off work while refining the plan, the app's main flow.

@@ -10,8 +10,9 @@ import {
   MAX_STORED_CHAT_MESSAGES,
   ProjectChatMessageSchema,
   ProjectChatResponseSchema,
-  isRoadmapTaskComplete,
-  normalizeRoadmapTaskProgress,
+  describeRoadmapForModel,
+  ensureRoadmapIds,
+  mergeGeneratedRoadmap,
   ProjectRoadmapSchema,
 } from "@/lib/project-planning";
 
@@ -79,6 +80,11 @@ export async function POST(request: Request, { params }: RouteContext) {
       })
     : [];
 
+  const savedRoadmap = ProjectRoadmapSchema.safeParse(project.roadmap);
+  const currentRoadmap = savedRoadmap.success
+    ? ensureRoadmapIds(savedRoadmap.data)
+    : null;
+
   try {
     const chat = new ChatOpenAI({
       model,
@@ -96,7 +102,11 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const { raw, parsed: response } = await chat.invoke([
       new SystemMessage(
-        `You are Jelaksy, a thoughtful project-planning partner. Help the user shape the project "${project.name}". The user provided the following required project description as the starting brief: ${project.description || "No description is available for this older project."} Treat this description as the source of truth for the project and use it as the foundation for the roadmap. You can ask a user to provide more details but not ask the user to restate the project idea or provide a description. Reply conversationally and return a complete, practical roadmap that reflects both the description and the latest conversation. Organize it into clear phases with actionable tasks. Keep it concise and realistic, using as many phases and tasks per phase as the project actually needs. Let project complexity and dependencies determine the task count; do not force a fixed or uniform number. If a consequential detail is unclear, make a reasonable assumption, provide a useful draft anyway, and ask at most one focused follow-up question to refine it.`
+        `You are Jelaksy, a thoughtful project-planning partner. Help the user shape the project "${project.name}". The user provided the following required project description as the starting brief: ${project.description || "No description is available for this older project."} Treat this description as the source of truth for the project and use it as the foundation for the roadmap. You can ask a user to provide more details but not ask the user to restate the project idea or provide a description. Reply conversationally and return a complete, practical roadmap that reflects both the description and the latest conversation. Organize it into clear phases with actionable tasks. Keep it concise and realistic, using as many phases and tasks per phase as the project actually needs. Let project complexity and dependencies determine the task count; do not force a fixed or uniform number. If a consequential detail is unclear, make a reasonable assumption, provide a useful draft anyway, and ask at most one focused follow-up question to refine it.${
+          currentRoadmap
+            ? ` The user's current roadmap is below as JSON. Every phase and task has an "id". Keep the same id for every phase and task that is kept, even if you reword it or move it, because the id is how the user's checked-off progress is preserved. Use null as the id only for phases and tasks you newly add, and drop items that no longer belong. Current roadmap: ${describeRoadmapForModel(currentRoadmap)}`
+            : " This is the first roadmap, so use null for every id."
+        }`
       ),
       ...history,
       new HumanMessage(parsedBody.data.message),
@@ -118,29 +128,10 @@ export async function POST(request: Request, { params }: RouteContext) {
       select: { roadmap: true },
     });
     const existingRoadmap = ProjectRoadmapSchema.safeParse(latestProject?.roadmap);
-    const roadmap = normalizeRoadmapTaskProgress({
-      ...response.roadmap,
-      phases: response.roadmap.phases.map((phase) => {
-        const existingPhase = existingRoadmap.success
-          ? existingRoadmap.data.phases.find(
-              (candidate) => candidate.title === phase.title
-            )
-          : undefined;
-
-        const taskCompletion = phase.tasks.map((task) => {
-          const existingTaskIndex = existingPhase?.tasks.indexOf(task) ?? -1;
-          return existingTaskIndex >= 0 && existingPhase
-            ? isRoadmapTaskComplete(existingPhase, existingTaskIndex)
-            : false;
-        });
-
-        return {
-          ...phase,
-          taskCompletion,
-          completed: existingPhase?.completed ?? false,
-        };
-      }),
-    });
+    const roadmap = mergeGeneratedRoadmap(
+      response.roadmap,
+      existingRoadmap.success ? existingRoadmap.data : null
+    );
     const chatMessages = [
       ...storedHistory.slice(-(MAX_STORED_CHAT_MESSAGES - 2)),
       { role: "user" as const, content: parsedBody.data.message },
