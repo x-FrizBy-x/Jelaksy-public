@@ -12,7 +12,7 @@ npm run build        # prisma generate && next build
 npm run start        # serve the production build
 npm run lint         # eslint
 npx tsc --noEmit     # type check (no separate script)
-npx prisma migrate deploy   # apply prisma/migrations to a database
+npx prisma db push   # init schema on an EMPTY database; there are no migration files
 npm test             # vitest run (tests/)
 ```
 
