@@ -36,6 +36,12 @@ export async function reserveChatUsage(userId: number) {
   return rows[0]?.id ?? null;
 }
 
+// Server-side failures (5xx) shouldn't cost the user budget, so their
+// reservation is dropped. User mistakes (4xx) keep it.
+export async function releaseChatUsage(id: number) {
+  await prisma.chatUsage.deleteMany({ where: { id } });
+}
+
 export async function settleChatUsage(id: number, tokens: number) {
   await prisma.chatUsage.update({
     where: { id },

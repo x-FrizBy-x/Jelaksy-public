@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getOwnedProject, projectNotFound, requireUser } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
-import { reserveChatUsage, settleChatUsage } from "@/lib/rate-limit";
+import { releaseChatUsage, reserveChatUsage, settleChatUsage } from "@/lib/rate-limit";
 import {
   MAX_CHAT_MESSAGE_LENGTH,
   MAX_STORED_CHAT_MESSAGES,
@@ -161,6 +161,9 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ ...response, roadmap });
   } catch (error) {
     console.error("Failed to generate project roadmap:", error);
+    await releaseChatUsage(usageId).catch((releaseError) =>
+      console.error("Failed to release chat usage:", releaseError)
+    );
     return NextResponse.json(
       { error: "The AI couldn't respond right now. Please try again." },
       { status: 502 }
