@@ -44,10 +44,10 @@ Jelaksy is a project-planning app that turns a project idea into a practical roa
 3. Set up the database schema. For a **new, empty database**, run:
 
    ```powershell
-   npx prisma db push
+   npx prisma migrate deploy
    ```
 
-   This project currently has no checked-in Prisma migration files. `db push` applies the Prisma schema directly to the configured database. Do not point it at a database containing important data without first inspecting the schema changes and creating a backup.
+   This applies the checked-in migrations in `prisma/migrations`. If your database was created earlier with `db push`, do not run the baseline against it; mark it as applied instead with `npx prisma migrate resolve --applied 0_init` (after making sure the schema matches, e.g. the `Project.version` column exists and the `UserPlan` enum only has `Basic`, `Pro`, `Ultra`).
 
 4. Start the development server:
 
@@ -106,7 +106,7 @@ Keep all secrets server-side. Do not prefix them with `NEXT_PUBLIC_`, commit rea
 
 The Prisma schema is in [`prisma/schema.prisma`](./prisma/schema.prisma). It defines users and projects; each project's roadmap and chat history are stored as JSON in PostgreSQL.
 
-Prisma Client is generated automatically by `npm run dev` and `npm run build`. For a fresh database, create the schema with `npx prisma db push` before using the app. For ongoing production schema changes, add and review proper migrations rather than relying on an unreviewed schema push.
+Prisma Client is generated automatically by `npm run dev` and `npm run build`. For a fresh database, apply the migrations with `npx prisma migrate deploy` before using the app. For schema changes, create a reviewed migration with `npx prisma migrate dev --name <change>` against a disposable dev database.
 
 ## Checks and production build
 
@@ -128,11 +128,11 @@ The app can be deployed to a Node.js-compatible host such as Vercel. A deploymen
 
 1. Create a PostgreSQL database for the deployment and add its connection string as `DATABASE_URL` in the host's project settings.
 2. Set a newly generated `SESSION_SECRET` and the AI variables in those settings. For OpenAI, add `OPENAI_API_KEY` and optionally `OPENAI_MODEL`. A local Ollama URL such as `http://localhost:11434/v1` will not work from Vercel.
-3. Initialize the empty deployment database from your machine using the deployment database URL, or use a reviewed migration workflow. Since this repository currently has no migration files, `npx prisma db push` can initialize an **empty** database. In PowerShell, you can set the deployment URL for only that command:
+3. Apply the migrations to the deployment database from your machine using the deployment database URL. In PowerShell, you can set the deployment URL for only that command:
 
    ```powershell
    $env:DATABASE_URL = "your-deployment-database-url"
-   npx prisma db push
+   npx prisma migrate deploy
    Remove-Item Env:DATABASE_URL
    ```
 
