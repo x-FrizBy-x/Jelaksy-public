@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/session";
+import { requireUser } from "@/lib/api";
 import {
   MAX_PROJECT_DESCRIPTION_LENGTH,
   MAX_PROJECT_NAME_LENGTH,
@@ -7,18 +7,19 @@ import {
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const projects = await prisma.project.findMany({
     where: {
       ownerId: user.id,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      createdAt: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -30,14 +31,9 @@ export async function GET() {
 
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   try {
     const body: unknown = await request.json();

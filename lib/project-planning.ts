@@ -93,6 +93,55 @@ export function normalizeRoadmapTaskProgress(
   };
 }
 
+export type SetTaskCompletedResult =
+  | { ok: true; roadmap: ProjectRoadmap }
+  | { ok: false; reason: "not-found" | "blocked" };
+
+/**
+ * Checks or unchecks one task. Tasks complete in order, so checking is refused
+ * ("blocked") while an earlier task is incomplete, and unchecking also
+ * un-completes every later task.
+ */
+export function setTaskCompleted(
+  roadmap: ProjectRoadmap,
+  phaseIndex: number,
+  taskIndex: number,
+  completed: boolean
+): SetTaskCompletedResult {
+  const normalized = normalizeRoadmapTaskProgress(roadmap);
+
+  if (taskIndex >= (normalized.phases[phaseIndex]?.tasks.length ?? 0)) {
+    return { ok: false, reason: "not-found" };
+  }
+
+  const earlierTasksComplete = normalized.phases.every((phase, p) =>
+    p > phaseIndex ||
+    phase.tasks.every((_, t) =>
+      p === phaseIndex && t >= taskIndex ? true : isRoadmapTaskComplete(phase, t)
+    )
+  );
+  if (completed && !earlierTasksComplete) {
+    return { ok: false, reason: "blocked" };
+  }
+
+  return {
+    ok: true,
+    roadmap: normalizeRoadmapTaskProgress({
+      ...normalized,
+      phases: normalized.phases.map((phase, p) =>
+        p === phaseIndex
+          ? {
+              ...phase,
+              taskCompletion: phase.tasks.map((_, t) =>
+                t === taskIndex ? completed : isRoadmapTaskComplete(phase, t)
+              ),
+            }
+          : phase
+      ),
+    }),
+  };
+}
+
 /**
  * Gives every phase and task a stable ID so progress survives rewording.
  * Roadmaps stored before IDs existed get deterministic positional IDs, so the
