@@ -77,4 +77,4 @@ Suggested order: #1, then #2 and #3, then extract pure logic (#5) and add tests 
     - [ ] Decide on plan names
     - [ ] Rename the config file and add `dotenv`
     - [ ] Move to `prisma migrate` before there is real user data
-    - [ ] Remove unused dependencies
+    - [ ] Remove unused dependencies.
