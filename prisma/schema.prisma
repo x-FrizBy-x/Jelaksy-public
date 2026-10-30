@@ -11,9 +11,6 @@ enum UserPlan {
   Basic
   Pro
   Ultra
-  Small
-  Medium
-  Large
 }
 
 model User {
@@ -56,6 +53,8 @@ model Project {
   description String
   roadmap     Json?
   chatMessages Json?
+  // Bumped on every roadmap/chat write; writers compare it to avoid lost updates.
+  version     Int           @default(0)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

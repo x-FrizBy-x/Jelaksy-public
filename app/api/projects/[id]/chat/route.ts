@@ -14,6 +14,7 @@ import {
   ensureRoadmapIds,
   mergeGeneratedRoadmap,
   ProjectRoadmapSchema,
+  type ProjectRoadmap,
 } from "@/lib/project-planning";
 
 type RouteContext = {
@@ -21,6 +22,8 @@ type RouteContext = {
 };
 
 export const maxDuration = 60;
+
+const MAX_WRITE_ATTEMPTS = 3;
 
 const RequestSchema = z.object({
   message: z.string().trim().min(1).max(MAX_CHAT_MESSAGE_LENGTH),
@@ -119,28 +122,41 @@ export async function POST(request: Request, { params }: RouteContext) {
       throw new Error("The model response did not match the expected roadmap format.");
     }
 
-    const latestProject = await prisma.project.findFirst({
-      where: { id: project.id, ownerId: user.id },
-      select: { roadmap: true },
-    });
-    const existingRoadmap = ProjectRoadmapSchema.safeParse(latestProject?.roadmap);
-    const roadmap = mergeGeneratedRoadmap(
-      response.roadmap,
-      existingRoadmap.success ? existingRoadmap.data : null
-    );
     const chatMessages = [
       ...storedHistory.slice(-(MAX_STORED_CHAT_MESSAGES - 2)),
       { role: "user" as const, content: parsedBody.data.message },
       { role: "assistant" as const, content: response.reply },
     ].slice(-MAX_STORED_CHAT_MESSAGES);
 
-    await prisma.project.update({
-      where: { id: project.id },
-      data: {
-        roadmap,
-        chatMessages,
-      },
-    });
+    // The model call is slow, so progress may have been checked off meanwhile.
+    // Merge against the latest roadmap and only write if it hasn't changed
+    // since we read it, retrying the (cheap) merge otherwise.
+    let roadmap: ProjectRoadmap | null = null;
+    for (let attempt = 0; attempt < MAX_WRITE_ATTEMPTS && !roadmap; attempt++) {
+      const latestProject = await getOwnedProject(project.id, user.id);
+      if (!latestProject) {
+        return projectNotFound();
+      }
+
+      const existingRoadmap = ProjectRoadmapSchema.safeParse(latestProject.roadmap);
+      const merged = mergeGeneratedRoadmap(
+        response.roadmap,
+        existingRoadmap.success ? existingRoadmap.data : null
+      );
+
+      const updated = await prisma.project.updateMany({
+        where: { id: project.id, ownerId: user.id, version: latestProject.version },
+        data: { roadmap: merged, chatMessages, version: { increment: 1 } },
+      });
+
+      if (updated.count === 1) {
+        roadmap = merged;
+      }
+    }
+
+    if (!roadmap) {
+      throw new Error("The roadmap kept changing while saving the AI response.");
+    }
 
     return NextResponse.json({ ...response, roadmap });
   } catch (error) {

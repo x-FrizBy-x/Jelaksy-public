@@ -12,10 +12,11 @@ npm run build        # prisma generate && next build
 npm run start        # serve the production build
 npm run lint         # eslint
 npx tsc --noEmit     # type check (no separate script)
-npx prisma db push   # init schema on an EMPTY database; there are no migration files
+npx prisma migrate deploy   # apply prisma/migrations to a database
+npm test             # vitest run (tests/)
 ```
 
-There is no test suite. The Prisma client is generated into `app/generated/prisma` (import from `@/app/generated/prisma/client`), so run `npx prisma generate` after editing `prisma/schema.prisma`. Prisma CLI reads `DATABASE_URL` from `.env` (not `.env.local`) via `dotenv/config`; the config file is named `prisma7.config.ts` rather than the default `prisma.config.ts`. Setup details and env vars (`DATABASE_URL`, `SESSION_SECRET`, `OPENAI_API_KEY`, optional `OPENAI_MODEL`/`OPENAI_BASE_URL`) are in `README.md`.
+Tests live in `tests/` (Vitest; route tests mock `@/lib/prisma` and `@/lib/session`). The Prisma client is generated into `app/generated/prisma` (import from `@/app/generated/prisma/client`), so run `npx prisma generate` after editing `prisma/schema.prisma`. Prisma CLI reads `DATABASE_URL` from `.env` (not `.env.local`) via `dotenv/config`; the config file is `prisma.config.ts`. Setup details and env vars (`DATABASE_URL`, `SESSION_SECRET`, `OPENAI_API_KEY`, optional `OPENAI_MODEL`/`OPENAI_BASE_URL`) are in `README.md`.
 
 Next.js is v16 with breaking changes — see `AGENTS.md` and read `node_modules/next/dist/docs/` before writing Next-specific code (e.g. `params` is a `Promise` in route handlers).
 
