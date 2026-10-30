@@ -11,9 +11,6 @@ enum UserPlan {
   Basic
   Pro
   Ultra
-  Small
-  Medium
-  Large
 }
 
 model User {
