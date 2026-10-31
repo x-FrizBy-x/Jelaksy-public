@@ -8,5 +8,4 @@ export const navItems = [
 export const providers = [
 	["GitHub", "/icons/github.svg"],
 	["Google", "/icons/google.svg"],
-	["Apple", "/icons/apple.svg"],
 ] as const;

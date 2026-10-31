@@ -6,6 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 import { cookies, headers } from "next/headers";
 import { setSessionCookie } from "@/lib/session";
+import {
+  sendVerificationEmail,
+  wasVerificationRecentlySent,
+} from "@/lib/email-verification";
 import { redirect } from "next/navigation";
 import {
   clearLoginFailures,
@@ -80,13 +84,13 @@ export async function registerUser(
   const { name, email, password } = parsed.data;
   const passwordHash = await bcrypt.hash(password, 12);
 
-  let userId: number;
+  let user: { id: number; email: string; name: string };
 
   try {
-    const user = await prisma.user.create({
+    user = await prisma.user.create({
       data: { name, email, passwordHash },
+      select: { id: true, email: true, name: true },
     });
-    userId = user.id;
   } catch (error) {
     // Unique constraint on email: also covers concurrent signups.
     if (
@@ -99,10 +103,19 @@ export async function registerUser(
     throw error;
   }
 
-  await setSessionCookie(userId);
+  // No session until the email is verified; a failed send is recoverable
+  // through "resend" on the next page.
+  try {
+    await sendVerificationEmail(user);
+  } catch (error) {
+    console.error("Failed to send verification email", error);
+  }
 
-  redirect("/platform");
+  redirect(checkEmailPath(email));
 }
+
+const checkEmailPath = (email: string) =>
+  `/authorization/check-email?email=${encodeURIComponent(email)}`;
 
 export async function loginUser(
   _prevState: AuthState,
@@ -135,15 +148,66 @@ export async function loginUser(
     user?.passwordHash ?? DUMMY_PASSWORD_HASH
   );
 
-  if (!user || !passwordMatches) {
+  if (!user || !user.passwordHash || !passwordMatches) {
     await recordLoginFailure(email, ip);
     return { error: "Invalid email or password.", values };
   }
 
   await clearLoginFailures(email);
+
+  // Only reveal this after the password was right.
+  if (!user.emailVerified) {
+    redirect(checkEmailPath(email));
+  }
+
   await setSessionCookie(user.id);
 
   redirect("/platform");
+}
+
+export type ResendState = { message?: string };
+
+// Same answer whether or not the address exists or needs a link, so it can't
+// be used to probe for accounts.
+export async function resendVerification(
+  _prevState: ResendState,
+  formData: FormData
+): Promise<ResendState> {
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const generic = {
+    message: "If that address needs verification, we've sent a new link.",
+  };
+
+  if (!email) {
+    return generic;
+  }
+
+  const ip = await getClientIp();
+
+  if (await isLoginThrottled(`resend:${email}`, ip)) {
+    return { message: "Too many requests. Please try again in a few minutes." };
+  }
+
+  await recordLoginFailure(`resend:${email}`, ip);
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, email: true, name: true, emailVerified: true },
+  });
+
+  if (!user || user.emailVerified || (await wasVerificationRecentlySent(user.id))) {
+    return generic;
+  }
+
+  try {
+    await sendVerificationEmail(user);
+  } catch (error) {
+    console.error("Failed to send verification email", error);
+  }
+
+  return generic;
 }
 
 export async function logoutUser() {

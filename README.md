@@ -68,6 +68,10 @@ Use `.env` for local development. For a deployment, set these values in the host
 | `OPENAI_API_KEY` | For AI chat | OpenAI API key, or a non-empty placeholder for an Ollama OpenAI-compatible endpoint |
 | `OPENAI_MODEL` | No | Model name; defaults to `gpt-4o-mini` |
 | `OPENAI_BASE_URL` | No | OpenAI-compatible API base URL; leave unset for OpenAI |
+| `APP_URL` | In production | Public base URL (default `http://localhost:3000`); used in verification links and OAuth redirect URIs |
+| `RESEND_API_KEY`, `EMAIL_FROM` | For real email | Resend key and verified sender. If the key is unset, verification links are printed to the server console |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | For Google sign-in | OAuth client; redirect URI `APP_URL/api/auth/oauth/google/callback` |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | For GitHub sign-in | OAuth app; callback URL `APP_URL/api/auth/oauth/github/callback` |
 
 Generate a session secret in PowerShell with:
 
