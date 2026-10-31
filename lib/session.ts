@@ -57,7 +57,7 @@ export const getCurrentUser = cache(async () => {
     return null;
   }
 
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
       id: session.userId,
     },
@@ -65,6 +65,14 @@ export const getCurrentUser = cache(async () => {
       id: true,
       name: true,
       email: true,
+      emailVerified: true,
     },
   });
+
+  // Also covers sessions issued before email verification existed.
+  if (!user?.emailVerified) {
+    return null;
+  }
+
+  return { id: user.id, name: user.name, email: user.email };
 });

@@ -8,11 +8,17 @@ import { getCurrentUser } from "@/lib/session";
 const providers = [
 	["GitHub", "/icons/github.svg"],
 	["Google", "/icons/google.svg"],
-	["Apple", "/icons/apple.svg"],
 ] as const;
 
+const errorMessages: Record<string, string> = {
+	oauth_failed: "Sign-in with that provider failed. Please try again.",
+	oauth_unavailable: "That sign-in method isn't available right now.",
+	oauth_email_unverified: "Your provider account has no verified email address, so we can't sign you in with it.",
+	verify_invalid: "That verification link is invalid or has expired. Log in to request a new one.",
+};
+
 type AuthorizationPageProps = {
-	searchParams: Promise<{ mode?: string | string[] }>;
+	searchParams: Promise<{ mode?: string | string[]; error?: string | string[] }>;
 };
 
 export default async function AuthorizationPage({ searchParams }: AuthorizationPageProps) {
@@ -24,7 +30,8 @@ export default async function AuthorizationPage({ searchParams }: AuthorizationP
 	const params = await searchParams;
 	const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
 	const isRegistering = mode === "register";
-	const providerPrefix = isRegistering ? "mode=register&" : "";
+	const errorCode = Array.isArray(params.error) ? params.error[0] : params.error;
+	const pageError = errorCode ? errorMessages[errorCode] : undefined;
 
 	return (
 		<main className="authorization-page">
@@ -40,9 +47,11 @@ export default async function AuthorizationPage({ searchParams }: AuthorizationP
 				<h1 id="authorization-title">{isRegistering ? "Create your space" : "Welcome back."}</h1>
 				<p className="authorization-intro">{isRegistering ? "" : "Log in to continue shaping what's next."}</p>
 
+				{pageError && <p role="alert" className="authorization-error">{pageError}</p>}
+
 				<div className="provider-list">
 					{providers.map(([provider, icon]) => (
-						<a className="provider-button" href={`/authorization?${providerPrefix}provider=${provider.toLowerCase()}`} key={provider}>
+						<a className="provider-button" href={`/api/auth/oauth/${provider.toLowerCase()}`} key={provider}>
 							<Image className="provider-mark" src={icon} alt="" width={20} height={20} />
 							<span>{isRegistering ? "Sign up with" : "Continue with"} {provider}</span>
 						</a>

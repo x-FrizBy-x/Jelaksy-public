@@ -17,7 +17,8 @@ model User {
   id            Int       @id @default(autoincrement())
   email         String    @unique
   name          String
-  passwordHash  String
+  // Null for accounts created through OAuth only.
+  passwordHash  String?
   plan          UserPlan  @default(Basic)
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
@@ -25,6 +26,34 @@ model User {
 
   projects      Project[]
   chatUsage     ChatUsage[]
+  oauthAccounts OAuthAccount[]
+  verificationTokens EmailVerificationToken[]
+}
+
+model OAuthAccount {
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  provider          String
+  providerAccountId String
+  createdAt         DateTime @default(now())
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// Only the SHA-256 of the emailed token is stored.
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model ChatUsage {
