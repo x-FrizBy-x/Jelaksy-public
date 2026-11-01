@@ -1,16 +1,14 @@
 import { redirect } from "next/navigation";
-import { consumeVerificationToken } from "@/lib/email-verification";
-import { setSessionCookie } from "@/lib/session";
 
+// Kept for links in emails sent before verification moved to a confirmation
+// page. It must not consume the token: mail scanners and link prefetchers
+// issue GETs, and only the POST on /authorization/verify may use it up.
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get("token");
-  const userId = token ? await consumeVerificationToken(token) : null;
 
-  if (userId === null) {
-    redirect("/authorization?error=verify_invalid");
-  }
-
-  await setSessionCookie(userId);
-
-  redirect("/platform");
+  redirect(
+    token
+      ? `/authorization/verify?token=${encodeURIComponent(token)}`
+      : "/authorization?error=verify_invalid"
+  );
 }
