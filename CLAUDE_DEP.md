@@ -43,7 +43,7 @@ State after the email verification + OAuth work (branch `feat/email-verification
 - **`maxDuration = 60`** on the chat route, but the local model took ~2 to 2.5 minutes per call. Fine in dev; a hosted deployment with a slow model could time out.
 - **Behavior change.** `PATCH /api/projects/[id]` returns 400 if sent `taskCompletion`. Only `ProjectChat.tsx` used it, and it is updated.
 - **UI partly exercised.** The auth pages were clicked through by the owner. The project task checkboxes and the chat UI have still not been clicked through in a browser.
-- **`npm audit`** reports vulnerabilities (11 as of the last check: 1 moderate, 9 high, 1 critical), not re-run after adding `arctic`. Not investigated. `npm audit fix --force` could change versions, so review first.
+- **`npm audit` (2026-11-01):** `next` bumped from the exact pin 16.3.4 to 16.4.3 (critical advisories: image-optimization RCE, Server Actions DoS, cache issues) and `npm audit fix` updated the transitive high ones (`prisma`/`@prisma/config`, `mysql2`, `sharp`, `zod`, `vite`, `fast-uri`, `source-map-js`). `npm audit --omit=dev` now reports 0. 16 moderate findings remain, all dev-only (`minimatch` under the ESLint plugins); the only fix is `npm audit fix --force`, which would change ESLint major versions, so it was left alone. Re-run `npm audit` periodically; `next` is pinned exactly, so security bumps are manual.
 - **Blocked install scripts.** npm blocked install scripts for `prisma`, `@prisma/engines` and `unrs-resolver`. `prisma generate` and `db push` worked anyway. If `db push` fails, check this first (`npm install-scripts ls`).
 - **Ownership checks are manual.** There is no middleware, so every route and page must filter by `ownerId`. `app/platform/projects/[id]/page.tsx` does its own `findFirst` instead of `getOwnedProject`.
 
@@ -66,7 +66,7 @@ State after the email verification + OAuth work (branch `feat/email-verification
 3. ~~Fix the small auth gaps~~ Done 2026-11-01 (uncommitted, not yet clicked through in a browser).
 4. ~~Add tests for `loginUser`, `resendVerification` and the OAuth route handlers~~ Done 2026-11-01.
 5. Click through the task checkboxes and the chat UI in a browser.
-6. Investigate `npm audit` and decide the 4xx usage question.
+6. ~~Investigate `npm audit`~~ Done 2026-11-01. Still to decide: the 4xx usage question.
 7. Production readiness: verified Resend domain, `APP_URL`, production OAuth apps, Google consent-screen publishing, and the existing-user backfill decision.
 8. Optional: remove `@tailwindcss/vite`; use `getOwnedProject` in the project page; add password reset.
 
