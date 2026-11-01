@@ -33,7 +33,7 @@ State after the email verification + OAuth work (branch `feat/email-verification
 - **Registering an existing *verified* email** still says "An account with this email already exists." (reveals that the account exists; unavoidable without an email-only "check your inbox" flow for every case).
 - **Re-registering an unverified email** replaces the stored password and name and sends a fresh link (skipped inside the 1-minute cooldown). Residual risk: someone who knows a victim's address could re-register it between the victim's signup and their click on the link, so the victim would verify an account with the other person's password. Closing it fully would need the password to be set only after verification.
 - **No password reset, no "set a password" for OAuth-only users, no way to unlink a provider.**
-- **Server actions and OAuth routes are only partly tested.** Tests cover `lib/email-verification.ts`, `findOrCreateOAuthUser`, and (`tests/auth-actions.test.ts`) `registerUser` for duplicate emails plus `confirmEmailVerification`. `loginUser`, `resendVerification`, the happy path of `registerUser` and the OAuth route handlers were only tested live.
+- **Server actions and OAuth routes** are covered by `tests/auth-actions.test.ts` (register duplicates, login, resend, confirm) and `tests/oauth-routes.test.ts` (start and callback), with Prisma and Next mocked. The happy path of `registerUser` and the real provider exchange (`fetchOAuthProfile`) are only tested live.
 - **`LoginAttempt` rows** are only purged on a successful login for that email (and the resend throttle writes to the same table), so they can accumulate. A periodic cleanup would help.
 
 ### From REVIEW.md #10
@@ -64,7 +64,7 @@ State after the email verification + OAuth work (branch `feat/email-verification
 1. Merge `feat/email-verification-oauth` (open a PR) and update or close the stale PR #3.
 2. Rotate the Neon password (still advisable).
 3. ~~Fix the small auth gaps~~ Done 2026-11-01 (uncommitted, not yet clicked through in a browser).
-4. Add tests for `loginUser`, `resendVerification` and the OAuth route handlers.
+4. ~~Add tests for `loginUser`, `resendVerification` and the OAuth route handlers~~ Done 2026-11-01.
 5. Click through the task checkboxes and the chat UI in a browser.
 6. Investigate `npm audit` and decide the 4xx usage question.
 7. Production readiness: verified Resend domain, `APP_URL`, production OAuth apps, Google consent-screen publishing, and the existing-user backfill decision.

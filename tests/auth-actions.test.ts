@@ -15,6 +15,10 @@ const mocks = vi.hoisted(() => {
     userFindUnique: vi.fn(),
     userUpdate: vi.fn(),
     hash: vi.fn(),
+    compare: vi.fn(),
+    isLoginThrottled: vi.fn(),
+    recordLoginFailure: vi.fn(),
+    clearLoginFailures: vi.fn(),
     setSessionCookie: vi.fn(),
     sendVerificationEmail: vi.fn(),
     wasVerificationRecentlySent: vi.fn(),
@@ -33,7 +37,7 @@ vi.mock("next/headers", () => ({
   headers: async () => new Headers(),
 }));
 vi.mock("bcryptjs", () => ({
-  default: { hash: mocks.hash, compare: vi.fn() },
+  default: { hash: mocks.hash, compare: mocks.compare },
 }));
 vi.mock("@/app/generated/prisma/client", () => ({
   Prisma: { PrismaClientKnownRequestError: mocks.KnownRequestError },
@@ -49,9 +53,9 @@ vi.mock("@/lib/prisma", () => ({
 }));
 vi.mock("@/lib/session", () => ({ setSessionCookie: mocks.setSessionCookie }));
 vi.mock("@/lib/login-throttle", () => ({
-  clearLoginFailures: vi.fn(),
-  isLoginThrottled: vi.fn(),
-  recordLoginFailure: vi.fn(),
+  clearLoginFailures: mocks.clearLoginFailures,
+  isLoginThrottled: mocks.isLoginThrottled,
+  recordLoginFailure: mocks.recordLoginFailure,
 }));
 vi.mock("@/lib/email-verification", () => ({
   sendVerificationEmail: mocks.sendVerificationEmail,
@@ -59,7 +63,12 @@ vi.mock("@/lib/email-verification", () => ({
   consumeVerificationToken: mocks.consumeVerificationToken,
 }));
 
-import { confirmEmailVerification, registerUser } from "@/app/authorization/actions";
+import {
+  confirmEmailVerification,
+  loginUser,
+  registerUser,
+  resendVerification,
+} from "@/app/authorization/actions";
 
 function registerForm(overrides: Record<string, string> = {}) {
   const form = new FormData();
@@ -162,5 +171,128 @@ describe("confirmEmailVerification", () => {
       "REDIRECT:/authorization?error=verify_invalid"
     );
     expect(mocks.consumeVerificationToken).not.toHaveBeenCalled();
+  });
+});
+
+function loginForm(email = "Ada@Example.com", password = "correct horse") {
+  const form = new FormData();
+  form.set("email", email);
+  form.set("password", password);
+  return form;
+}
+
+describe("loginUser", () => {
+  const verifiedUser = { id: 3, passwordHash: "h", emailVerified: new Date() };
+  const invalid = "Invalid email or password.";
+
+  it("rejects empty fields without touching the database", async () => {
+    const result = await loginUser({}, loginForm("", ""));
+
+    expect(result.error).toBe("Please enter your email and password.");
+    expect(mocks.userFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("refuses while throttled", async () => {
+    mocks.isLoginThrottled.mockResolvedValue(true);
+
+    const result = await loginUser({}, loginForm());
+
+    expect(result.error).toMatch(/Too many failed attempts/);
+    expect(mocks.compare).not.toHaveBeenCalled();
+  });
+
+  it("records a failure for a wrong password", async () => {
+    mocks.userFindUnique.mockResolvedValue(verifiedUser);
+    mocks.compare.mockResolvedValue(false);
+
+    const result = await loginUser({}, loginForm());
+
+    expect(result.error).toBe(invalid);
+    expect(mocks.recordLoginFailure).toHaveBeenCalledWith("ada@example.com", "unknown");
+    expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+  });
+
+  it("gives the same message for an unknown email and an OAuth-only account", async () => {
+    mocks.compare.mockResolvedValue(true);
+
+    mocks.userFindUnique.mockResolvedValue(null);
+    expect((await loginUser({}, loginForm())).error).toBe(invalid);
+
+    mocks.userFindUnique.mockResolvedValue({ ...verifiedUser, passwordHash: null });
+    expect((await loginUser({}, loginForm())).error).toBe(invalid);
+
+    expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+  });
+
+  it("sends an unverified user to check-email only after the right password", async () => {
+    mocks.userFindUnique.mockResolvedValue({ ...verifiedUser, emailVerified: null });
+    mocks.compare.mockResolvedValue(true);
+
+    await expect(loginUser({}, loginForm())).rejects.toThrow(check("ada@example.com"));
+    expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+  });
+
+  it("signs a verified user in and clears their failures", async () => {
+    mocks.userFindUnique.mockResolvedValue(verifiedUser);
+    mocks.compare.mockResolvedValue(true);
+
+    await expect(loginUser({}, loginForm())).rejects.toThrow("REDIRECT:/platform");
+    expect(mocks.clearLoginFailures).toHaveBeenCalledWith("ada@example.com");
+    expect(mocks.setSessionCookie).toHaveBeenCalledWith(3);
+  });
+});
+
+describe("resendVerification", () => {
+  const emailForm = (email: string) => {
+    const form = new FormData();
+    form.set("email", email);
+    return form;
+  };
+  const generic = "If that address needs verification, we've sent a new link.";
+  const unverified = { id: 4, email: "ada@example.com", name: "Ada", emailVerified: null };
+
+  it("sends a link to an unverified user", async () => {
+    mocks.userFindUnique.mockResolvedValue(unverified);
+    mocks.wasVerificationRecentlySent.mockResolvedValue(false);
+
+    const result = await resendVerification({}, emailForm("Ada@Example.com"));
+
+    expect(result.message).toBe(generic);
+    expect(mocks.recordLoginFailure).toHaveBeenCalledWith("resend:ada@example.com", "unknown");
+    expect(mocks.sendVerificationEmail).toHaveBeenCalledWith(unverified);
+  });
+
+  it("gives the same answer and sends nothing for unknown, verified or recently-sent", async () => {
+    mocks.wasVerificationRecentlySent.mockResolvedValue(false);
+
+    mocks.userFindUnique.mockResolvedValue(null);
+    expect((await resendVerification({}, emailForm("x@example.com"))).message).toBe(generic);
+
+    mocks.userFindUnique.mockResolvedValue({ ...unverified, emailVerified: new Date() });
+    expect((await resendVerification({}, emailForm("x@example.com"))).message).toBe(generic);
+
+    mocks.userFindUnique.mockResolvedValue(unverified);
+    mocks.wasVerificationRecentlySent.mockResolvedValue(true);
+    expect((await resendVerification({}, emailForm("x@example.com"))).message).toBe(generic);
+
+    expect(mocks.sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it("refuses while throttled without looking the user up", async () => {
+    mocks.isLoginThrottled.mockResolvedValue(true);
+
+    const result = await resendVerification({}, emailForm("ada@example.com"));
+
+    expect(result.message).toMatch(/Too many requests/);
+    expect(mocks.userFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("still answers when the email provider fails", async () => {
+    mocks.userFindUnique.mockResolvedValue(unverified);
+    mocks.wasVerificationRecentlySent.mockResolvedValue(false);
+    mocks.sendVerificationEmail.mockRejectedValue(new Error("resend down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect((await resendVerification({}, emailForm("ada@example.com"))).message).toBe(generic);
   });
 });
