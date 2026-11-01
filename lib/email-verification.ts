@@ -32,7 +32,7 @@ export async function sendVerificationEmail(user: {
     }),
   ]);
 
-  const link = `${getEnv().APP_URL}/api/auth/verify?token=${token}`;
+  const link = `${getEnv().APP_URL}/authorization/verify?token=${token}`;
 
   await sendEmail({
     to: user.email,

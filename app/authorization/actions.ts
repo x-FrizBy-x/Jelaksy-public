@@ -7,6 +7,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { cookies, headers } from "next/headers";
 import { setSessionCookie } from "@/lib/session";
 import {
+  consumeVerificationToken,
   sendVerificationEmail,
   wasVerificationRecentlySent,
 } from "@/lib/email-verification";
@@ -94,13 +95,42 @@ export async function registerUser(
   } catch (error) {
     // Unique constraint on email: also covers concurrent signups.
     if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
+      !(
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      )
     ) {
+      throw error;
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, emailVerified: true },
+    });
+
+    if (!existing || existing.emailVerified) {
       return { error: "An account with this email already exists.", values };
     }
 
-    throw error;
+    // The earlier signup never confirmed the address, so treat this as a retry:
+    // the new password replaces the old one, and a fresh link goes to the
+    // address. Inside the resend cooldown nothing changes, so a repeated
+    // submit can neither flood the inbox nor swap the password under a link
+    // that was just sent.
+    if (!(await wasVerificationRecentlySent(existing.id))) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: { name, passwordHash },
+      });
+
+      try {
+        await sendVerificationEmail({ id: existing.id, email, name });
+      } catch (sendError) {
+        console.error("Failed to send verification email", sendError);
+      }
+    }
+
+    redirect(checkEmailPath(email));
   }
 
   // No session until the email is verified; a failed send is recoverable
@@ -208,6 +238,21 @@ export async function resendVerification(
   }
 
   return generic;
+}
+
+// Runs on the POST from /authorization/verify so a prefetched or scanned GET
+// of the emailed link can't use the token up.
+export async function confirmEmailVerification(formData: FormData) {
+  const token = String(formData.get("token") ?? "");
+  const userId = token ? await consumeVerificationToken(token) : null;
+
+  if (userId === null) {
+    redirect("/authorization?error=verify_invalid");
+  }
+
+  await setSessionCookie(userId);
+
+  redirect("/platform");
 }
 
 export async function logoutUser() {

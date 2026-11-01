@@ -50,7 +50,7 @@ describe("sendVerificationEmail", () => {
     expect(token).toHaveLength(64);
     expect(data.tokenHash).toBe(sha256(token!));
     expect(data.tokenHash).not.toBe(token);
-    expect(text).toContain("http://app.test/api/auth/verify?token=");
+    expect(text).toContain("http://app.test/authorization/verify?token=");
     expect(data.expiresAt.getTime()).toBeGreaterThan(Date.now());
   });
 
