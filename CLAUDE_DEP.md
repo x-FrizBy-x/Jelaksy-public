@@ -1,10 +1,10 @@
 # Open issues and what Claude needs
 
-State after the email verification + OAuth work (branch `feat/email-verification-oauth`, not yet merged), last updated 2026-10-31. REVIEW.md items #1–#10 are done except the `@tailwindcss/vite` part of #10. The `emailVerified` column is now used.
+State after the email verification + OAuth work (merged to `main` in PRs #7–#10, including the `next` 16.4.3 audit bump), last updated 2026-11-02. REVIEW.md items #1–#10 are done except the `@tailwindcss/vite` part of #10. The `emailVerified` column is now used.
 
 ## Done
 - **#6 Lost updates:** `Project.version` column. `PATCH .../tasks` and the chat route write only if `version` is unchanged, bump it, and retry up to 3 times (tasks returns 409 if it still conflicts).
-- **#9 Tests:** Vitest 4 (`npm test`, 39 tests). Covers roadmap logic, the tasks and chat routes, verification tokens and OAuth account linking. Vitest 5 conflicts with `@types/node` 20, hence v4.
+- **#9 Tests:** Vitest 4 (`npm test`, 69 tests). Covers roadmap logic, the tasks and chat routes, verification tokens and OAuth account linking. Vitest 5 conflicts with `@types/node` 20, hence v4.
 - **#10 (partly):** `UserPlan` is `Basic/Pro/Ultra` only. Migrations were tried (baseline `0_init`) and then deleted on purpose while the schema is still changing; the workflow is `db push`. `prisma7.config.ts` renamed to `prisma.config.ts`. `dotenv` added. Revisit `prisma migrate` once the schema settles.
 - **Chat usage on server errors (`5fbe6ba`):** `releaseChatUsage` in `lib/rate-limit.ts` is called in the chat route's 502 `catch`, so a failed model call no longer costs the user budget.
 - **Email verification (2026-10-31):**
@@ -27,12 +27,13 @@ State after the email verification + OAuth work (branch `feat/email-verification
 - **Existing users.** After `db push`, any `User` row created before this feature has `emailVerified = null` and is locked out. The dev DB was empty before testing; if a database with real users ever gets this change, backfill deliberately (for example `UPDATE "User" SET "emailVerified" = now() WHERE "emailVerified" IS NULL`) only if those emails are trusted.
 
 ### Decision needed
-- **4xx and the usage limit.** The intent was that user mistakes (4xx) count toward the limit and server errors (5xx) don't. Today validation failures (400) and not-found/not-owned (404) are rejected *before* the reservation, so they cost nothing; only a 4xx after the model call (project deleted mid-call, 404) stays charged. To make bad requests count, move the reservation earlier or add a small charge on those paths. Trade-off: spamming invalid requests then burns the user's own budget. Not decided.
+- **4xx and the usage limit.** The intent was that user mistakes (4xx) count toward the limit and server errors (5xx) don't. Today validation failures (400) and not-found/not-owned (404) are rejected *before* the reservation, so they cost nothing; only a 4xx after the model call (project deleted mid-call, 404) stays charged. To make bad requests count, move the reservation earlier or add a small charge on those paths. Trade-off: spamming invalid requests then burns the user's own budget. **Decided 2026-11-02: keep as is** (bad requests are rejected before the reservation and cost nothing, so users can't burn their own budget).
 
 ### Auth follow-ups (known gaps)
 - **Registering an existing *verified* email** still says "An account with this email already exists." (reveals that the account exists; unavoidable without an email-only "check your inbox" flow for every case).
-- **Re-registering an unverified email** replaces the stored password and name and sends a fresh link (skipped inside the 1-minute cooldown). Residual risk: someone who knows a victim's address could re-register it between the victim's signup and their click on the link, so the victim would verify an account with the other person's password. Closing it fully would need the password to be set only after verification.
-- **No password reset, no "set a password" for OAuth-only users, no way to unlink a provider.**
+- **[LATER / FINAL TOUCHES — deliberately deferred 2026-11-02]** **Re-registering an unverified email** replaces the stored password and name and sends a fresh link (skipped inside the 1-minute cooldown). Residual risk: someone who knows a victim's address could re-register it between the victim's signup and their click on the link, so the victim would verify an account with the other person's password. Closing it fully would need the password to be set only after verification.
+  - **Planned fix (architect plan, 2026-11-02):** "Option B": register asks only for name and email; the password is chosen on the emailed link page (`/authorization/verify`, shared `SetPasswordForm`); re-registering an unverified email only resends the link and never touches the password. Bundle it with password reset (separate `PasswordResetToken` table, 1-hour TTL, POST-only consume, `after()` to avoid a timing leak) and a `User.sessionVersion` column (`sv` in the JWT, checked in `getCurrentUser`) so a reset logs out other sessions. Alternative "Option A" (keep the signup password, re-enter it on confirm) is about 1.5x the work. Open questions to settle then: auto sign-in after reset, separate IP throttle bucket for reset, closing register enumeration for verified emails, and `db push` consent.
+- **[LATER / FINAL TOUCHES]** **No password reset, no "set a password" for OAuth-only users, no way to unlink a provider.** Password reset and set-password are covered by the plan above.
 - **Server actions and OAuth routes** are covered by `tests/auth-actions.test.ts` (register duplicates, login, resend, confirm) and `tests/oauth-routes.test.ts` (start and callback), with Prisma and Next mocked. The happy path of `registerUser` and the real provider exchange (`fetchOAuthProfile`) are only tested live.
 - **`LoginAttempt` rows** are only purged on a successful login for that email (and the resend throttle writes to the same table), so they can accumulate. A periodic cleanup would help.
 
@@ -61,9 +62,9 @@ State after the email verification + OAuth work (branch `feat/email-verification
 - **Email:** with `RESEND_API_KEY` set, Resend's `delivered@resend.dev` address accepts a test send without mailing anyone. Without the key, the link is printed in the dev server output.
 
 ## Suggested next steps
-1. Merge `feat/email-verification-oauth` (open a PR) and update or close the stale PR #3.
+1. ~~Merge the feature branch and close stale PR #3~~ Done (PRs #3, #7–#10 all merged 2026-11-01).
 2. Rotate the Neon password (still advisable).
-3. ~~Fix the small auth gaps~~ Done 2026-11-01 (uncommitted, not yet clicked through in a browser).
+3. ~~Fix the small auth gaps~~ Done 2026-11-01 (merged; not yet clicked through in a browser).
 4. ~~Add tests for `loginUser`, `resendVerification` and the OAuth route handlers~~ Done 2026-11-01.
 5. Click through the task checkboxes and the chat UI in a browser.
 6. ~~Investigate `npm audit`~~ Done 2026-11-01. Still to decide: the 4xx usage question.
