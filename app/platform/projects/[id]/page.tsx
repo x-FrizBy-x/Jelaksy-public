@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { getOwnedProject } from "@/lib/api";
 import {
   ProjectChatMessageSchema,
   ProjectRoadmapSchema,
@@ -19,9 +19,7 @@ export default async function ProjectPage({
   }
 
   const { id } = await params;
-  const project = await prisma.project.findFirst({
-    where: { id, ownerId: user.id },
-  });
+  const project = await getOwnedProject(id, user.id);
   if (!project) {
     notFound();
   }
