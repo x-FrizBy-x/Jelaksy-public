@@ -67,10 +67,14 @@ State after the email verification + OAuth work (merged to `main` in PRs #7–#1
 2. Rotate the Neon password (still advisable).
 3. ~~Fix the small auth gaps~~ Done 2026-11-01 (merged; not yet clicked through in a browser).
 4. ~~Add tests for `loginUser`, `resendVerification` and the OAuth route handlers~~ Done 2026-11-01.
-5. Click through the task checkboxes and the chat UI in a browser.
-6. ~~Investigate `npm audit`~~ Done 2026-11-01. Still to decide: the 4xx usage question.
+5. ~~Click through the task checkboxes and the chat UI in a browser~~ Done 2026-11-05 with Playwright (see "UI partly exercised"). Still unchecked: Delete project, Projects/Deadlines pages, mobile layout.
+6. ~~Investigate `npm audit`~~ Done 2026-11-01. ~~4xx usage question~~ Decided 2026-11-02: keep as is.
 7. Production readiness: verified Resend domain, `APP_URL`, production OAuth apps, Google consent-screen publishing, and the existing-user backfill decision.
-8. ~~Remove `@tailwindcss/vite`; use `getOwnedProject` in the project page~~ Done 2026-11-04 (uncommitted). Still optional: password reset (deferred, see plan above).
+8. ~~Remove `@tailwindcss/vite`; use `getOwnedProject` in the project page~~ Done 2026-11-04; in open PR #13 (with the doc updates of 2026-11-05), not merged yet. Still optional: password reset (deferred, see plan above).
+9. Small follow-ups from 2026-11-05: make `PATCH .../tasks` return 400/404 instead of 409 for an out-of-range index; update the README's Ollama example (still `qwen3:8b`); `LoginAttempt` cleanup; decide on `maxDuration = 60` for the hosted deployment (`llama3.1` took ~51s on the API and 190-200s in the UI runs on this laptop).
+
+## Session log
+- **2026-11-05:** live-tested the chat and task APIs and the browser UI (all passed, throwaway user deleted afterwards); found `qwen3:8b` too slow (thinking tokens plus a nearly full 6 GB GPU), so `.env.local` now uses `llama3.1:latest`; opened PR #13. Playwright was installed only in the scratchpad, not in the project. The Neon password has still not been rotated.
 
 ## Fresh checkout setup (gitignored build output)
 1. `npm install`
