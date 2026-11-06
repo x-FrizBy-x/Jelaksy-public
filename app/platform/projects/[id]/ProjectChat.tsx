@@ -40,6 +40,15 @@ export default function ProjectChat({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  // Only the first phase starts open; the rest are minimized.
+  const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([0]));
+
+  const togglePhase = (index: number) =>
+    setExpandedPhases((current) => {
+      const next = new Set(current);
+      if (!next.delete(index)) next.add(index);
+      return next;
+    });
   const router = useRouter();
   const autoPromptStarted = useRef(false);
 
@@ -265,13 +274,26 @@ export default function ProjectChat({
               aria-label="Message the planning assistant"
               value={input}
               onChange={(event) => setInput(event.target.value)}
+              onKeyDown={(event) => {
+                // Enter sends; Shift+Enter inserts a newline. Skip while an IME is composing.
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing
+                ) {
+                  event.preventDefault();
+                  if (input.trim() && !sending) {
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }
+              }}
               placeholder="Share an idea, constraint, or next step..."
               maxLength={4000}
               rows={3}
               disabled={sending}
             />
             <div className={styles.composerFooter}>
-              <span>Your roadmap updates as you work through the idea.</span>
+              <span>Enter to send · Shift+Enter for a new line</span>
               <button type="submit" disabled={sending || !input.trim()}>
                 {sending ? "Thinking..." : "Send message"} <span>↗</span>
               </button>
@@ -294,16 +316,50 @@ export default function ProjectChat({
               <h3>{roadmap.title}</h3>
               <p className={styles.roadmapSummary}>{roadmap.summary}</p>
               {roadmapError && <p className={styles.error} role="alert">{roadmapError}</p>}
+              <div className={styles.roadmapActions}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedPhases(
+                      expandedPhases.size === 0
+                        ? new Set(roadmap.phases.map((_, i) => i))
+                        : new Set()
+                    )
+                  }
+                >
+                  {expandedPhases.size === 0 ? "Expand all" : "Collapse all"}
+                </button>
+              </div>
               <ol className={styles.phaseList}>
-                {roadmap.phases.map((phase, index) => (
+                {roadmap.phases.map((phase, index) => {
+                  const isCollapsed = !expandedPhases.has(index);
+                  const doneTasks = phase.tasks.filter((_, taskIndex) =>
+                    isRoadmapTaskComplete(phase, taskIndex)
+                  ).length;
+
+                  return (
                   <li
-                    className={`${styles.phase} ${phase.completed ? styles.phaseCompleted : ""}`}
+                    className={`${styles.phase} ${phase.completed ? styles.phaseCompleted : ""} ${isCollapsed ? styles.phaseCollapsed : ""}`}
                     key={`${index}-${phase.title}`}
                   >
                     <span className={styles.phaseNumber}>{String(index + 1).padStart(2, "0")}</span>
                     <div>
                       <div className={styles.phaseHeading}>
-                        <h4>{phase.title}</h4>
+                        <h4>
+                          <button
+                            type="button"
+                            className={styles.phaseToggle}
+                            aria-expanded={!isCollapsed}
+                            aria-controls={`phase-body-${index}`}
+                            onClick={() => togglePhase(index)}
+                          >
+                            <span className={styles.chevron} aria-hidden="true" />
+                            {phase.title}
+                            <span className={styles.phaseCount}>
+                              {doneTasks}/{phase.tasks.length}
+                            </span>
+                          </button>
+                        </h4>
                         <label className={styles.phaseCompletion}>
                           <input
                             type="checkbox"
@@ -314,6 +370,7 @@ export default function ProjectChat({
                           <span>Complete</span>
                         </label>
                       </div>
+                      <div id={`phase-body-${index}`} hidden={isCollapsed}>
                       <p>{phase.description}</p>
                       <ul className={styles.taskList}>
                         {phase.tasks.map((task, taskIndex) => {
@@ -358,9 +415,11 @@ export default function ProjectChat({
                           );
                         })}
                       </ul>
+                      </div>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ol>
             </div>
           ) : (

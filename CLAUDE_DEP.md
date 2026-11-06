@@ -72,6 +72,11 @@ State after the email verification + OAuth work (merged to `main` in PRs #7–#1
 7. Production readiness: verified Resend domain, `APP_URL`, production OAuth apps, Google consent-screen publishing, and the existing-user backfill decision.
 8. ~~Remove `@tailwindcss/vite`; use `getOwnedProject` in the project page~~ Done 2026-11-04 (uncommitted). Still optional: password reset (deferred, see plan above).
 
+- **2026-11-06:** UI polish on the project page (`ProjectChat.tsx` / `.module.css`), all in PR `feat/chat-ui-enhancements`: Enter sends the chat message (Shift+Enter = newline, IME-safe); the chat panel is a fixed 640px with an internally scrolling conversation (the grid uses `align-items: start`, so it no longer stretches to the roadmap's height); roadmap phases are collapsible (chevron button, `done/total` counter, "Collapse all / Expand all"), and only the first phase starts expanded (state tracks the expanded set, so a regenerated roadmap also opens just phase 1). `tsc` and eslint pass; **not yet checked in a browser** and no tests were added for the UI. Also committed the `AGENTS.md` heading change that `next dev` regenerates. Creating a project auto-sends the description as the first chat message, so a new project already has a roadmap (the first model output marked "Planning" complete, which looks odd; not investigated).
+  - **Demo account left in the dev DB for UI review:** `jelaksy.demo@example.com` (password was given in chat, deliberately not stored here; verified via SQL) with project "Snake Game". Delete it when done (`DELETE FROM "User" WHERE email = 'jelaksy.demo@example.com'`; check the schema for cascade on projects first).
+  - Playwright for ad-hoc UI runs still lives only in an old scratchpad (`pw/`), not in the project. The memory-pressure reaper once killed the dev server task but the process kept running; a second `npm run dev` then fails with "Another next dev server is already running".
+  - Next: look at the new chat/roadmap layout in a browser (also mobile width), then the open items in "Suggested next steps".
+
 ## Fresh checkout setup (gitignored build output)
 1. `npm install`
 2. `npx prisma generate` (creates `app/generated/prisma`)

@@ -163,7 +163,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
   gap: 18px;
-  align-items: stretch;
+  /* Each panel sizes to its own content; the chat no longer stretches to the roadmap's height. */
+  align-items: start;
 }
 
 .chatPanel,
@@ -179,6 +180,9 @@
 .chatPanel {
   display: flex;
   flex-direction: column;
+  /* Fixed size: the conversation scrolls inside instead of growing the panel. */
+  height: 640px;
+  min-height: 0;
 }
 
 .panelHeader {
@@ -231,9 +235,8 @@
   flex: 1;
   flex-direction: column;
   gap: 20px;
-  max-height: 590px;
-  min-height: 380px;
-  overflow: auto;
+  min-height: 0;
+  overflow-y: auto;
   padding: 22px;
 }
 
@@ -494,6 +497,74 @@
   justify-content: space-between;
   gap: 12px;
   margin: 4px 0 7px;
+}
+
+.phaseToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.phaseToggle:focus-visible {
+  outline: 2px solid rgba(112, 223, 255, 0.8);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-top: -3px;
+  border-right: 1.5px solid #70dfff;
+  border-bottom: 1.5px solid #70dfff;
+  transform: rotate(45deg);
+  transition: transform 150ms ease;
+}
+
+.phaseCollapsed .chevron {
+  margin-top: 0;
+  margin-left: -2px;
+  transform: rotate(-45deg);
+}
+
+.phaseCount {
+  color: #6f869f;
+  font-size: 0.66rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.roadmapActions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -12px 0 10px;
+}
+
+.roadmapActions button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #70dfff;
+  font: inherit;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.phaseCollapsed {
+  padding-bottom: 14px;
+}
+
+.phaseCollapsed:not(:last-child) > div {
+  padding-bottom: 12px;
 }
 
 .phaseCompletion {
