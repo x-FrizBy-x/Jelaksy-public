@@ -17,22 +17,22 @@ import PlanetMark, {ArrowIcon} from "@/components/objects";
 		Personal: [
 			{
 				name: "Basic",
-				price: "$25",
-				description: "A focused starting point for your next idea.",
-				features: ["1 active project", "Core planning tools", "Unlimited notes"],
+				price: "$0",
+				description: "Free forever. A focused starting point for your next idea.",
+				features: ["2 active projects", "AI-generated phased roadmaps", "Standard AI chat allowance"],
 			},
 			{
 				name: "Pro",
-				price: "$35",
+				price: "$20",
 				description: "More room to turn ambitious ideas into reality.",
-				features: ["5 active projects", "Advanced project guidance", "Priority workspace access"],
+				features: ["10 active projects", "5x the AI chat allowance", "Priority response speed"],
 				featured: true,
 			},
 			{
 				name: "Ultra",
 				price: "$50",
 				description: "The complete toolkit for building without limits.",
-				features: ["Unlimited projects", "Full planning toolkit", "Personalized insights"],
+				features: ["Unlimited projects", "20x the AI chat allowance", "Fastest models and priority support"],
 			},
 		],
 		Business: [
@@ -115,7 +115,7 @@ import PlanetMark, {ArrowIcon} from "@/components/objects";
 									{plan.features.map((feature) => <li key={feature}>{feature}</li>)}
 								</ul>
 								<Link className={`button ${plan.featured ? "button-primary" : "button-outline"}`} href="/authorization">
-									{plan.featured ? "Try out" : "Purchase"} <ArrowIcon />
+									{plan.price === "$0" ? "Start free" : plan.featured ? "Try out" : "Purchase"} <ArrowIcon />
 								</Link>
 							</article>
 						))}
