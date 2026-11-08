@@ -5,6 +5,7 @@ import styles from "./ProjectsDashboard.module.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PlanetMark from "@/components/objects";
+import PlanIcon, { type PlanName } from "@/components/PlanIcon";
 
 type Project = {
   id: string;
@@ -22,11 +23,13 @@ type LatestTask = {
 
 export default function ProjectsDashboard({
   userName,
+  userPlan,
   logoutAction,
   latestTask,
   initialProjects,
 }: {
   userName: string;
+  userPlan: PlanName;
   logoutAction: () => Promise<void>;
   latestTask: LatestTask;
   initialProjects: Project[];
@@ -200,7 +203,15 @@ export default function ProjectsDashboard({
                   <span>⚙</span> Settings
                 </button>
                 <Link className={styles.userMenuItem} href="/pricing">
-                  <span className={styles.planIcon} aria-hidden="true" /> Your plan
+                  <PlanIcon plan={userPlan} className={styles.planIcon} />
+                  Your plan
+                  <span
+                    className={`${styles.planBadge} ${
+                      userPlan === "Basic" ? "" : styles.planBadgePaid
+                    }`}
+                  >
+                    {userPlan}
+                  </span>
                 </Link>
                 <form action={logoutAction} className={styles.logoutForm}>
                   <button className={`${styles.userMenuItem} ${styles.logoutItem}`} type="submit">

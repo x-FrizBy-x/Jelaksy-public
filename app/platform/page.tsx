@@ -43,6 +43,7 @@ export default async function Platform() {
     <div className="placeholder-glow" aria-hidden="true" />
     <ProjectsDashboard
       userName={user.name}
+      userPlan={user.plan}
       logoutAction={logoutUser}
       latestTask={latestTask}
       initialProjects={projects.map((project) => ({

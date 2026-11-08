@@ -479,7 +479,30 @@
 }
 
 .userMenuItem > .planIcon {
-  background: url("/icons/plan-link.svg") center / 16px 16px no-repeat;
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  color: var(--accent);
+}
+
+.userMenuItem > .planBadge {
+  width: auto;
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid rgba(112, 223, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(112, 223, 255, 0.06);
+  color: #9fb8d0;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.userMenuItem > .planBadgePaid {
+  border-color: rgba(112, 223, 255, 0.5);
+  background: rgba(112, 223, 255, 0.14);
+  color: var(--accent);
 }
 
 .logoutItem:hover {
